@@ -1,0 +1,14 @@
+{application, 'rebar3_diameter_compiler', [
+    {description, "Compile diameter .dia files"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+   ]},
+    {env,[]},
+    {modules, []}
+    {contributors, ["Carlos Eduardo de Paula", "Stock rebar2 diameter compiler module"]},
+    {licenses, ["MIT"]},
+    {links, [{"Github", "https://github.com/carlosedp/rebar3_diameter_compiler"}]}
+ ]}.

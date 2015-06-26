@@ -1,10 +1,10 @@
--module('compile_diameter').
+-module(compile_diameter).
 -behaviour(provider).
 
 -export([init/1, do/1, format_error/1]).
 
--define(PROVIDER, 'compile_diameter').
--define(DEPS, [app_discovery]).
+-define(PROVIDER, compile).
+-define(DEPS, [{default, app_discovery}]).
 
 %% ===================================================================
 %% Public API
@@ -14,9 +14,10 @@ init(State) ->
     Provider = providers:create([
             {name, ?PROVIDER},            % The 'user friendly' name of the task
             {module, ?MODULE},            % The module implementation of the task
+            {namespace, diameter},
             {bare, true},                 % The task can be run by the user, always true
             {deps, ?DEPS},                % The list of dependencies
-            {example, "rebar3 compile_diameter"}, % How to use the plugin
+            {example, "rebar3 compile diameter"}, % How to use the plugin
             {opts, []},                   % list of options understood by the plugin
             {short_desc, short_desc()},
             {desc, desc()}
@@ -26,40 +27,35 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
+    rebar_api:info("Compiling diameter...", []),
     lists:foreach(fun(A) -> compile(State, A) end, rebar_state:project_apps(State)),
     {ok, State}.
 
 
 compile(State, _AppFile) ->
-    DiaOpts = get_config(State, dia_opts, []),
+    file:set_cwd(rebar_app_info:dir(_AppFile)),
+    DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
     DiaFiles = filelib:wildcard("dia/*.dia"),
     code:add_pathsz(["ebin" | IncludeEbin]),
-    FileSequence = case get_config(State, dia_first_files, []) of
+    FileSequence = case rebar_state:get(State, dia_first_files, []) of
         [] ->
             DiaFiles;
         CompileFirst ->
             CompileFirst ++
             [F || F <- DiaFiles, not lists:member(F, CompileFirst)]
     end,
-
-    rebar_base_compiler:run(State, FileSequence,
-                            "dia", ".dia", "src", ".erl",
+    rebar_base_compiler:run(State,
+                            FileSequence,
+                            "dia",
+                            ".dia",
+                            "src",
+                            ".erl",
                             fun compile_dia/3).
-
-
 
 -spec format_error(any()) ->  iolist().
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).
-
-% clean(State, _AppFile) ->
-%     DiaOpts = get_config(State, dia_opts, []),
-%     IncludeEbin = proplists:get_value(include, DiaOpts, []),
-%     code:add_pathsz(["ebin" | IncludeEbin]),
-%     GeneratedFiles = dia_generated_files("dia", "src", "include"),
-%     ok = rebar_file_utils:delete_each(GeneratedFiles),
-%     ok.
 
 
 %% ===================================================================
@@ -82,7 +78,7 @@ desc() ->
 compile_dia(Source, Target, State) ->
     ok = filelib:ensure_dir(Target),
     ok = filelib:ensure_dir(filename:join("include", "dummy.hrl")),
-    Opts = [{outdir, "src"}] ++ get_config(State, dia_opts, []),
+    Opts = [{outdir, "src"}] ++ rebar_state:get(State, dia_opts, []),
     case diameter_dict_util:parse({path, Source}, []) of
         {ok, Spec} ->
             FileName = dia_filename(Source, Spec),
@@ -91,7 +87,7 @@ compile_dia(Source, Target, State) ->
             HrlFile = filename:join("src", FileName ++ ".hrl"),
             ErlFile = filename:join("src", FileName ++ ".erl"),
             ErlCOpts = [{outdir, "ebin"}] ++
-                        get_config(State, erl_opts, []),
+                        rebar_state:get(State, erl_opts, []),
             _ = compile:file(ErlFile, ErlCOpts),
             case filelib:is_regular(HrlFile) of
                 true ->
@@ -100,28 +96,11 @@ compile_dia(Source, Target, State) ->
                     ok
             end;
         {error, Reason} ->
-            io:format(
+            rebar_api:error(
                 "Compiling ~s failed: ~s~n",
                 [Source, diameter_dict_util:format_error(Reason)]
             )
     end.
-
-% dia_generated_files(DiaDir, SrcDir, IncDir) ->
-%     F = fun(File, Acc) ->
-%             case catch diameter_dict_util:parse({path, File}, []) of
-%                 {ok, Spec} ->
-%                     FileName = dia_filename(File, Spec),
-%                     [
-%                         filename:join([IncDir, FileName ++ ".hrl"]) |
-%                         filelib:wildcard(
-%                             filename:join([SrcDir, FileName ++ ".*"])
-%                         )
-%                     ] ++ Acc;
-%                 _ ->
-%                     Acc
-%             end
-%     end,
-%     lists:foldl(F, [], filelib:wildcard(filename:join([DiaDir, "*.dia"]))).
 
 dia_filename(File, Spec) ->
     case proplists:get_value(name, Spec) of
@@ -130,7 +109,3 @@ dia_filename(File, Spec) ->
         Name ->
             Name
     end.
-
-get_config(State, Key, Default) ->
-    Config = rebar_state:get(State, dialyzer, []),
-    proplists:get_value(Key, Config, Default).

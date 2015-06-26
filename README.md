@@ -1,12 +1,12 @@
-compile_diameter
+rebar3_diameter_compiler
 =====
 
-Compile diameter .dia files
+Compile diameter .dia files in rebar3 projects
 
 Build
 -----
 
-    $ rebar3 compile
+    $ ./rebar3 compile
 
 Use
 ---
@@ -14,13 +14,26 @@ Use
 Add the plugin to your rebar config:
 
     {plugins, [
-        { compile_diameter, ".*", {git, "git@host:user/compile_diameter.git", {tag, "0.1.0"}}}
+        { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
     ]}.
+    {provider_hooks,
+     [
+      {pre,
+       [
+        {compile, {pc, compile}},
+        {clean, {pc, clean}}
+       ]
+      }
+     ]
+    }.
 
-Then just call your plugin directly in an existing application:
+The plugin will be ran on compile and clean commands or call your plugin directly in an existing application:
 
+    $ rebar3 diameter compile
+    ===> Fetching rebar3_diameter_compiler
+    ===> Compiling rebar3_diameter_compiler
+    ===> Compiling diameter...
 
-    $ rebar3 compile_diameter
-    ===> Fetching compile_diameter
-    ===> Compiling compile_diameter
-    <Plugin Output>
+    $ rebar3 diameter clean
+    ===> Cleaning diameter compiled files...
+
