@@ -27,13 +27,20 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
-    rebar_api:info("Compiling diameter...", []),
-    lists:foreach(fun(A) -> compile(State, A) end, rebar_state:project_apps(State)),
+    rebar_api:info("Compiling diameter files...", []),
+    Dir = rebar_state:dir(State),
+    case rebar_app_discover:find_app(Dir, all) of
+        false ->
+            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State);
+        {true, AppInfo} ->
+            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State) ++ [AppInfo]
+    end,
+    lists:foreach(fun(App) -> compile(State, App) end, AllApps),
     {ok, State}.
 
 
-compile(State, _AppFile) ->
-    file:set_cwd(rebar_app_info:dir(_AppFile)),
+compile(State, AppFile) ->
+    file:set_cwd(rebar_app_info:dir(AppFile)),
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
     DiaFiles = filelib:wildcard("dia/*.dia"),

@@ -35,50 +35,21 @@ init(State) ->
 do(State) ->
     rebar_api:info("Cleaning compiled diameter files...", []),
     Dir = rebar_state:dir(State),
-    io:format("Dir: ~p~n", [Dir]),
-
     case rebar_app_discover:find_app(Dir, all) of
         false ->
-            io:format("False~n"),
-            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State),
-            io:format("AllApps: ~p~n", [AllApps]),
-            lists:foreach(fun(A) -> clean(A, State) end, AllApps);
+            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State);
         {true, AppInfo} ->
-            io:format("True: ~p~n", [AppInfo]),
-            io:format("AppInfo: ~p~n", [AppInfo]),
-            clean(State, AppInfo)
-    end.
-
-    % {true, AppInfo} = rebar_app_discover:find_app(Dir, all),
-
-    % AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State),
-    % io:format("AllApps: ~p~n", [AllApps]),
-
-    % case rebar_app_utils:find(rebar_app_info:name(AppInfo), AllApps) of
-    %     {ok, AppInfo1} ->
-    %         %% Use the existing app info instead of newly created one
-
-    %         io:format("Case 1: ~p~n", [AppInfo1]),
-    %         clean(State, AppInfo1);
-    %     _ ->
-    %         io:format("Case 2: ~p~n", [AppInfo]),
-    %         clean(State, AppInfo)
-    % end.
-
-    % lists:foreach(fun(A) -> clean(State, A) end, rebar_state:project_apps(State)),
-    % {ok, State}.
+            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State) ++ [AppInfo]
+    end,
+    lists:foreach(fun(App) -> clean(State, App) end, AllApps),
+    {ok, State}.
 
 -spec format_error(any()) ->  iolist().
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).
 
-clean(AppInfo, State) ->
-    Dir = rebar_state:dir(State),
-    io:format("Clean-Dir: ~p~n", [Dir]),
-    io:format("Clean-CWD-before: ~p~n", [file:get_cwd()]),
-
-    file:set_cwd(rebar_app_info:dir(AppInfo)),
-    io:format("Clean-CWD-after: ~p~n", [file:get_cwd()]),
+clean(State, _AppFile) ->
+    file:set_cwd(rebar_app_info:dir(_AppFile)),
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
     code:add_pathsz(["ebin" | IncludeEbin]),
