@@ -1,6 +1,6 @@
 {application, 'rebar3_diameter_compiler', [
     {description, "Compile diameter .dia files"},
-    {vsn, "0.1.0"},
+    {vsn, "0.2.0"},
     {registered, []},
     {applications, [
         kernel,
