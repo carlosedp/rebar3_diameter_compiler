@@ -20,8 +20,8 @@ Add the plugin to your rebar config:
      [
       {pre,
        [
-        {compile, {pc, compile}},
-        {clean, {pc, clean}}
+        {compile, {diameter, compile}},
+        {clean, {diameter, clean}}
        ]
       }
      ]
