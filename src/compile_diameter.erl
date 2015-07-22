@@ -40,54 +40,30 @@ do(State) ->
 
 
 compile(State, AppFile) ->
-
-
-
-    % CurrDir = file:get_cwd(),
-    % file:set_cwd(rebar_app_info:dir(AppFile)),
-
     AppDir = rebar_app_info:dir(AppFile),
-    io:format("AppDir: ~p~n", [AppDir]),
     DiaDir = filename:join(AppDir, "dia"),
-    io:format("DiaDir: ~p~n", [DiaDir]),
+    rebar_api:debug("AppDir: ~p~n", [AppDir]),
 
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
 
-    DiaPath = filename:join([AppDir, "dia/*.dia"]),
-    DiaFiles = filelib:wildcard(DiaPath),
-
-    io:format("DiaFiles: ~p~n", [DiaFiles]),
-
     code:add_pathsz([filename:join([AppDir, "ebin"]) | filename:join([AppDir, IncludeEbin])]),
 
-    % DiaFirst = case rebar_state:get(State, dia_first_files, []) of
-    %     [] ->
-    %         [];
-    %     CompileFirst ->
-    %         CompileFirst
-    % end,
-    % io:format("DiaFirst: ~p~n", [DiaFirst]),
-
-    % FileSequence = case rebar_state:get(State, dia_first_files, []) of
-    %     [] ->
-    %         DiaFiles;
-    %     CompileFirst ->
-    %         CompileFirst ++
-    %         [filename:basename(F) || F <- DiaFiles, not lists:member(F, CompileFirst)]
-    % end,
-
-    FileSequence = ["rfc4006_cc_Gy.dia"],
-    io:format("FileSequence: ~p~n", [FileSequence]),
+    DiaFirst = case rebar_state:get(State, dia_first_files, []) of
+        [] ->
+            [];
+        CompileFirst ->
+            [filename:join(DiaDir, filename:basename(F)) || F <- CompileFirst]
+    end,
+    rebar_api:debug("Diameter first files: ~p~n", [DiaFirst]),
 
     rebar_base_compiler:run(State,
-                            [],
+                            DiaFirst,
                             AppDir,
                             ".dia",
                             AppDir,
                             ".erl",
                             fun compile_dia/3).
-    % file:set_cwd(CurrDir).
 
 -spec format_error(any()) ->  iolist().
 format_error(Reason) ->
