@@ -40,11 +40,32 @@ do(State) ->
 
 
 compile(State, AppFile) ->
-    file:set_cwd(rebar_app_info:dir(AppFile)),
+    % CurrDir = file:get_cwd(),
+    % file:set_cwd(rebar_app_info:dir(AppFile)),
+
+    AppDir = rebar_app_info:dir(AppFile),
+    io:format("AppDir: ~p~n", [AppDir]),
+    DiaDir = filename:join(AppDir, "dia"),
+    io:format("DiaDir: ~p~n", [DiaDir]),
+
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
-    DiaFiles = filelib:wildcard("dia/*.dia"),
-    code:add_pathsz(["ebin" | IncludeEbin]),
+
+    DiaPath = filename:join([AppDir, "dia/*.dia"]),
+    DiaFiles = filelib:wildcard(DiaPath),
+
+    io:format("DiaFiles: ~p~n", [DiaFiles]),
+
+    code:add_pathsz([filename:join([AppDir, "ebin"]) | filename:join([AppDir, IncludeEbin])]),
+
+    % DiaFirst = case rebar_state:get(State, dia_first_files, []) of
+    %     [] ->
+    %         [];
+    %     CompileFirst ->
+    %         CompileFirst
+    % end,
+    % io:format("DiaFirst: ~p~n", [DiaFirst]),
+
     FileSequence = case rebar_state:get(State, dia_first_files, []) of
         [] ->
             DiaFiles;
@@ -52,13 +73,17 @@ compile(State, AppFile) ->
             CompileFirst ++
             [F || F <- DiaFiles, not lists:member(F, CompileFirst)]
     end,
+
+    io:format("FileSequence: ~p~n", [FileSequence]),
+
     rebar_base_compiler:run(State,
                             FileSequence,
-                            "dia",
+                            DiaDir,
                             ".dia",
-                            "src",
+                            filename:join([AppDir, "src"]),
                             ".erl",
                             fun compile_dia/3).
+    % file:set_cwd(CurrDir).
 
 -spec format_error(any()) ->  iolist().
 format_error(Reason) ->
@@ -83,12 +108,15 @@ desc() ->
 -spec compile_dia(file:filename(), file:filename(),
                    rebar_config:config()) -> ok.
 compile_dia(Source, Target, State) ->
+    io:format("Source: ~p~n", [Source]),
+    io:format("Target: ~p~n", [Target]),
     ok = filelib:ensure_dir(Target),
     ok = filelib:ensure_dir(filename:join("include", "dummy.hrl")),
     Opts = [{outdir, "src"}] ++ rebar_state:get(State, dia_opts, []),
     case diameter_dict_util:parse({path, Source}, []) of
         {ok, Spec} ->
             FileName = dia_filename(Source, Spec),
+            io:format("FileName: ~p~n", [FileName]),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, erl),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, hrl),
             HrlFile = filename:join("src", FileName ++ ".hrl"),
