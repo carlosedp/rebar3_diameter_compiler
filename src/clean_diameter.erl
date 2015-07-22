@@ -49,11 +49,11 @@ format_error(Reason) ->
     io_lib:format("~p", [Reason]).
 
 clean(State, _AppFile) ->
-    file:set_cwd(rebar_app_info:dir(_AppFile)),
+    AppDir = rebar_app_info:dir(_AppFile),
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
     code:add_pathsz(["ebin" | IncludeEbin]),
-    GeneratedFiles = dia_generated_files("dia", "src", "include"),
+    GeneratedFiles = dia_generated_files(AppDir, "dia", "src", "include"),
     ok = rebar_file_utils:delete_each(GeneratedFiles),
     ok.
 
@@ -61,22 +61,22 @@ clean(State, _AppFile) ->
 %% Internal functions
 %% ===================================================================
 
-dia_generated_files(DiaDir, SrcDir, IncDir) ->
+dia_generated_files(AppDir, DiaDir, SrcDir, IncDir) ->
     F = fun(File, Acc) ->
             case catch diameter_dict_util:parse({path, File}, []) of
                 {ok, Spec} ->
                     FileName = dia_filename(File, Spec),
                     [
-                        filename:join([IncDir, FileName ++ ".hrl"]) |
+                        filename:join([AppDir, IncDir, FileName ++ ".hrl"]) |
                         filelib:wildcard(
-                            filename:join([SrcDir, FileName ++ ".*"])
+                            filename:join([AppDir, SrcDir, FileName ++ ".*"])
                         )
                     ] ++ Acc;
                 _ ->
                     Acc
             end
     end,
-    lists:foldl(F, [], filelib:wildcard(filename:join([DiaDir, "*.dia"]))).
+    lists:foldl(F, [], filelib:wildcard(filename:join([AppDir, DiaDir, "*.dia"]))).
 
 dia_filename(File, Spec) ->
     case proplists:get_value(name, Spec) of
