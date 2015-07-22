@@ -40,6 +40,9 @@ do(State) ->
 
 
 compile(State, AppFile) ->
+
+
+
     % CurrDir = file:get_cwd(),
     % file:set_cwd(rebar_app_info:dir(AppFile)),
 
@@ -66,21 +69,22 @@ compile(State, AppFile) ->
     % end,
     % io:format("DiaFirst: ~p~n", [DiaFirst]),
 
-    FileSequence = case rebar_state:get(State, dia_first_files, []) of
-        [] ->
-            DiaFiles;
-        CompileFirst ->
-            CompileFirst ++
-            [F || F <- DiaFiles, not lists:member(F, CompileFirst)]
-    end,
+    % FileSequence = case rebar_state:get(State, dia_first_files, []) of
+    %     [] ->
+    %         DiaFiles;
+    %     CompileFirst ->
+    %         CompileFirst ++
+    %         [filename:basename(F) || F <- DiaFiles, not lists:member(F, CompileFirst)]
+    % end,
 
+    FileSequence = ["rfc4006_cc_Gy.dia"],
     io:format("FileSequence: ~p~n", [FileSequence]),
 
     rebar_base_compiler:run(State,
-                            FileSequence,
-                            DiaDir,
+                            [],
+                            AppDir,
                             ".dia",
-                            filename:join([AppDir, "src"]),
+                            AppDir,
                             ".erl",
                             fun compile_dia/3).
     % file:set_cwd(CurrDir).
@@ -108,25 +112,25 @@ desc() ->
 -spec compile_dia(file:filename(), file:filename(),
                    rebar_config:config()) -> ok.
 compile_dia(Source, Target, State) ->
-    io:format("Source: ~p~n", [Source]),
-    io:format("Target: ~p~n", [Target]),
+    AppDir = filename:dirname(Target),
+    rebar_api:debug("Source diameter file: ~p~n", [Source]),
+    rebar_api:debug("Target diameter file: ~p~n", [Target]),
+
     ok = filelib:ensure_dir(Target),
     ok = filelib:ensure_dir(filename:join("include", "dummy.hrl")),
-    Opts = [{outdir, "src"}] ++ rebar_state:get(State, dia_opts, []),
+
+    OutDir = filename:join(AppDir, "src"),
+
+    Opts = [{outdir, OutDir}] ++ rebar_state:get(State, dia_opts, []),
     case diameter_dict_util:parse({path, Source}, []) of
         {ok, Spec} ->
             FileName = dia_filename(Source, Spec),
-            io:format("FileName: ~p~n", [FileName]),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, erl),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, hrl),
-            HrlFile = filename:join("src", FileName ++ ".hrl"),
-            ErlFile = filename:join("src", FileName ++ ".erl"),
-            ErlCOpts = [{outdir, "ebin"}] ++
-                        rebar_state:get(State, erl_opts, []),
-            _ = compile:file(ErlFile, ErlCOpts),
+            HrlFile = filename:join([AppDir, "src", FileName ++ ".hrl"]),
             case filelib:is_regular(HrlFile) of
                 true ->
-                    ok = rebar_file_utils:mv(HrlFile, "include");
+                    ok = rebar_file_utils:mv(HrlFile, filename:join(AppDir, "include"));
                 false ->
                     ok
             end;
