@@ -93,7 +93,7 @@ compile_dia(Source, Target, State) ->
     rebar_api:debug("Target diameter file: ~p~n", [Target]),
 
     ok = filelib:ensure_dir(Target),
-    ok = filelib:ensure_dir(filename:join("include", "dummy.hrl")),
+    ok = filelib:ensure_dir(filename:join([AppDir, "include", "dummy.hrl"])),
 
     OutDir = filename:join(AppDir, "src"),
 
