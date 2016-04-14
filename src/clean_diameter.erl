@@ -50,10 +50,11 @@ format_error(Reason) ->
 
 clean(State, _AppFile) ->
     AppDir = rebar_app_info:dir(_AppFile),
+    EbinDir = rebar_app_info:ebin_dir(_AppFile),
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
-    code:add_pathsz(["ebin" | IncludeEbin]),
-    GeneratedFiles = dia_generated_files(AppDir, "dia", "src", "include"),
+    code:add_pathsz([EbinDir | IncludeEbin]),
+    GeneratedFiles = dia_generated_files(AppDir, "dia", "src", "include", DiaOpts),
     ok = rebar_file_utils:delete_each(GeneratedFiles),
     ok.
 
@@ -61,9 +62,9 @@ clean(State, _AppFile) ->
 %% Internal functions
 %% ===================================================================
 
-dia_generated_files(AppDir, DiaDir, SrcDir, IncDir) ->
+dia_generated_files(AppDir, DiaDir, SrcDir, IncDir, DiaOpts) ->
     F = fun(File, Acc) ->
-            case catch diameter_dict_util:parse({path, File}, []) of
+            case catch diameter_dict_util:parse({path, File}, DiaOpts) of
                 {ok, Spec} ->
                     FileName = dia_filename(File, Spec),
                     [

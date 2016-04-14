@@ -42,12 +42,15 @@ do(State) ->
 compile(State, AppFile) ->
     AppDir = rebar_app_info:dir(AppFile),
     DiaDir = filename:join(AppDir, "dia"),
+    SrcDir = filename:join(AppDir, "src"),
+    EbinDir = rebar_app_info:ebin_dir(AppFile),
     rebar_api:debug("AppDir: ~p~n", [AppDir]),
+    rebar_api:debug("EbinDir: ~p~n", [AppDir]),
 
     DiaOpts = rebar_state:get(State, dia_opts, []),
     IncludeEbin = proplists:get_value(include, DiaOpts, []),
 
-    code:add_pathsz([filename:join([AppDir, "ebin"]) | filename:join([AppDir, IncludeEbin])]),
+    code:add_pathsz([EbinDir | filename:join([AppDir, IncludeEbin])]),
 
     DiaFirst = case rebar_state:get(State, dia_first_files, []) of
         [] ->
@@ -57,11 +60,11 @@ compile(State, AppFile) ->
     end,
     rebar_api:debug("Diameter first files: ~p~n", [DiaFirst]),
 
-    rebar_base_compiler:run(State,
+    rebar_base_compiler:run({State, AppDir, EbinDir},
                             DiaFirst,
-                            AppDir,
+                            DiaDir,
                             ".dia",
-                            AppDir,
+                            SrcDir,
                             ".erl",
                             fun compile_dia/3).
 
@@ -87,29 +90,28 @@ desc() ->
 
 -spec compile_dia(file:filename(), file:filename(),
                    rebar_config:config()) -> ok.
-compile_dia(Source, Target, State) ->
-    AppDir = filename:dirname(Target),
+compile_dia(Source, Target, {State, AppDir, EbinDir}) ->
     rebar_api:debug("Source diameter file: ~p~n", [Source]),
     rebar_api:debug("Target diameter file: ~p~n", [Target]),
 
     ok = filelib:ensure_dir(Target),
     ok = filelib:ensure_dir(filename:join([AppDir, "include", "dummy.hrl"])),
+    ok = filelib:ensure_dir(filename:join([EbinDir, "dummy.beam"])),
 
     OutDir = filename:join(AppDir, "src"),
+    IncludeOutDir = filename:join(AppDir, "include"),
 
     Opts = [{outdir, OutDir}] ++ rebar_state:get(State, dia_opts, []),
-    case diameter_dict_util:parse({path, Source}, []) of
+    IncludeOpts = [{outdir, IncludeOutDir}] ++ rebar_state:get(State, dia_opts, []),
+    case diameter_dict_util:parse({path, Source}, rebar_state:get(State, dia_opts, [])) of
         {ok, Spec} ->
             FileName = dia_filename(Source, Spec),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, erl),
-            _ = diameter_codegen:from_dict(FileName, Spec, Opts, hrl),
-            HrlFile = filename:join([AppDir, "src", FileName ++ ".hrl"]),
-            case filelib:is_regular(HrlFile) of
-                true ->
-                    ok = rebar_file_utils:mv(HrlFile, filename:join(AppDir, "include"));
-                false ->
-                    ok
-            end;
+            _ = diameter_codegen:from_dict(FileName, Spec, IncludeOpts, hrl),
+            ErlCOpts = [{outdir, EbinDir}] ++
+                        rebar_state:get(State, erl_opts, []),
+            {Result, _} = compile:file(Target, ErlCOpts),
+            Result;
         {error, Reason} ->
             rebar_api:error(
                 "Compiling ~s failed: ~s~n",
