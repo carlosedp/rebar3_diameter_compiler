@@ -165,14 +165,11 @@ compile_order(DiaFiles, Opts) ->
 		     try
 			 {ok, Bin} = file:read_file(F),
 			 Inherits0 =
-			     [I || <<"@inherits ", I/binary>> <-
-				       binary:split(Bin, [<< $\n >>, << $\r >>],
-						    [global, trim])],
+			     binary:split(Bin, [<< $\n >>, << $\r >>], [global, trim_all]),
+			 Inherits1 =
+			     [binary:split(I, [<<" ">>, << $\t >>], [global, trim_all]) || I <- Inherits0],
 			 Inherits =
-			     lists:map(fun(X) ->
-					       [I|_] = binary:split(X, [<<" ">>]),
-					       I
-				       end, Inherits0),
+			     [I || [<<"@inherits">>, I | _] <- Inherits1],
 			 rebar_api:debug("Inherits for ~p: ~p~n", [Dict, Inherits]),
 			 add(Graph, {Dict, Inherits})
 		     catch
