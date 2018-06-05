@@ -120,10 +120,10 @@ compile_dia(Source, Target, {State, AppDir, EbinDir}) ->
             FileName = dia_filename(Source, Spec),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, erl),
             _ = diameter_codegen:from_dict(FileName, Spec, IncludeOpts, hrl),
-            ErlCOpts = [{outdir, EbinDir}] ++
+            ErlCOpts = [{outdir, EbinDir}, return_errors] ++
                         rebar_state:get(State, erl_opts, []),
-	    case compile:file(Target, ErlCOpts) of
-		{ok, Module} ->
+    case compile:file(Target, ErlCOpts) of
+		  {ok, Module} ->
 		    case code:load_abs(EbinDir ++ "/" ++ atom_to_list(Module)) of
 			{error, LoadError} ->
 			    rebar_api:error(
