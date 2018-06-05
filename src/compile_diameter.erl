@@ -108,11 +108,17 @@ compile_dia(Source, Target, {State, AppDir, EbinDir}) ->
             FileName = dia_filename(Source, Spec),
             _ = diameter_codegen:from_dict(FileName, Spec, Opts, erl),
             _ = diameter_codegen:from_dict(FileName, Spec, IncludeOpts, hrl),
-            ErlCOpts = [{outdir, EbinDir}] ++
+            ErlCOpts = [{outdir, EbinDir}, return_errors] ++
                         rebar_state:get(State, erl_opts, []),
-            {Result, _} = compile:file(Target, ErlCOpts),
-            Result;
-        {error, Reason} ->
+            case compile:file(Target, ErlCOpts) of
+                {ok, _} -> ok;
+                {error, Reason} ->
+                    rebar_api:error(
+                      "Compiling ~s failed: ~s~n",
+                      [Source, diameter_dict_util:format_error(Reason)]
+                     )
+            end;
+        {error, Reason, _} ->
             rebar_api:error(
                 "Compiling ~s failed: ~s~n",
                 [Source, diameter_dict_util:format_error(Reason)]
