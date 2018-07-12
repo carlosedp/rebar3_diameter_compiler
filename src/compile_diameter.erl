@@ -128,7 +128,10 @@ compile_dia(Config, Source, Target, {AppDir, EbinDir}) ->
             _ = diameter_codegen:from_dict(FileName, Spec, IncludeOpts, hrl),
             ErlCOpts = [{outdir, EbinDir}, return_errors] ++
 		rebar_opts:get(Config, erl_opts, []),
-	    case compile:file(Target, ErlCOpts) of
+	    TargetName = proplists:get_value(name, Spec, filename:basename(Target, ".erl")),
+	    RealTarget = filename:join([filename:dirname(Target),
+					[TargetName, ".erl"]]),
+	    case compile:file(RealTarget, ErlCOpts) of
 		{ok, Module} ->
 		    case code:load_abs(EbinDir ++ "/" ++ atom_to_list(Module)) of
 			{error, LoadError} ->
