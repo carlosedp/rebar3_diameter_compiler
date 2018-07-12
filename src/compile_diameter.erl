@@ -133,6 +133,7 @@ compile_dia(Config, Source, Target, {AppDir, EbinDir}) ->
 					[TargetName, ".erl"]]),
 	    case compile:file(RealTarget, ErlCOpts) of
 		{ok, Module} ->
+		    code:purge(Module),
 		    case code:load_abs(EbinDir ++ "/" ++ atom_to_list(Module)) of
 			{error, LoadError} ->
 			    rebar_api:error(
