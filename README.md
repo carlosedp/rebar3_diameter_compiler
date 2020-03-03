@@ -13,29 +13,33 @@ Use
 
 Add the plugin to your rebar config from Github:
 
-    {plugins, [
-        { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
-    ]}.
+```erlang
+{plugins, [
+    { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
+]}.
 
-    {provider_hooks, [
-        {pre, [
-            {compile, {diameter, compile}},
-            {clean, {diameter, clean}}
-        ]}
-    ]}.
+{provider_hooks, [
+    {pre, [
+        {compile, {diameter, compile}},
+        {clean, {diameter, clean}}
+    ]}
+]}.
+```
 
 Or fetch the plugin using Hex.pm:
 
-    {plugins, [
-        rebar3_diameter_compiler
-    ]}.
+```erlang
+{plugins, [
+    rebar3_diameter_compiler
+]}.
 
-    {provider_hooks, [
-        {pre, [
-            {compile, {diameter, compile}},
-            {clean, {diameter, clean}}
-        ]}
-    ]}.
+{provider_hooks, [
+    {pre, [
+        {compile, {diameter, compile}},
+        {clean, {diameter, clean}}
+    ]}
+]}.
+```
 
 
 The plugin will be ran on compile and clean commands or call your plugin directly in an existing application:
