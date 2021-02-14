@@ -1,7 +1,7 @@
 rebar3_diameter_compiler
 =====
 
-Compile diameter .dia files in rebar3 projects
+Compile [diameter](http://erlang.org/doc/man/diameter.html) .dia files in rebar3 projects
 
 Build
 -----
