@@ -35,10 +35,10 @@ init(State) ->
 do(State) ->
     rebar_api:info("Cleaning compiled diameter files...", []),
     Dir = rebar_state:dir(State),
-    case rebar_app_discover:find_app(Dir, all) of
-        false ->
+    case rebar_app_info:discover(Dir, State) of
+        not_found ->
             AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State);
-        {true, AppInfo} ->
+        {ok, AppInfo} ->
             AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State) ++ [AppInfo]
     end,
     lists:foreach(fun(App) -> clean(State, App) end, AllApps),
