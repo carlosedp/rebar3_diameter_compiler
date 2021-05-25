@@ -34,14 +34,13 @@ init(State) ->
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()} | {error, string()}.
 do(State) ->
     rebar_api:info("Cleaning compiled diameter files...", []),
-    Dir = rebar_state:dir(State),
-    case rebar_app_discover:find_app(Dir, all) of
-        false ->
-            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State);
-        {true, AppInfo} ->
-            AllApps = rebar_state:project_apps(State) ++ rebar_state:all_deps(State) ++ [AppInfo]
-    end,
-    lists:foreach(fun(App) -> clean(State, App) end, AllApps),
+    Apps = case rebar_state:current_app(State) of
+               undefined ->
+                   rebar_state:project_apps(State);
+               AppInfo ->
+                   [AppInfo]
+           end,
+    lists:foreach(fun(App) -> clean(State, App) end, Apps),
     {ok, State}.
 
 -spec format_error(any()) ->  iolist().
