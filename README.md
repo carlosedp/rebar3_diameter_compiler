@@ -6,7 +6,7 @@ Compile [diameter](http://erlang.org/doc/man/diameter.html) .dia files in rebar3
 Build
 -----
 
-    $ ./rebar3 compile
+    ./rebar3 compile
 
 Use
 ---
@@ -52,3 +52,9 @@ The plugin will be ran on compile and clean commands or call your plugin directl
     $ rebar3 diameter clean
     ===> Cleaning diameter compiled files...
 
+Test
+-----
+
+This test compiles a `.dia` file for validation
+
+    ./rebar3 eunit
