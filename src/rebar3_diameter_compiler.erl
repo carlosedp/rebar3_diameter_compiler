@@ -1,4 +1,5 @@
 -module(rebar3_diameter_compiler).
+
 -behaviour(provider).
 
 -export([init/1, do/1, format_error/1]).
