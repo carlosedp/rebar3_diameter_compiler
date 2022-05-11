@@ -60,4 +60,14 @@ Test
 
 This test compiles a `.dia` file for validation
 
-    ./rebar3 eunit
+    rebar3 eunit
+
+Publishing new versions
+-----
+
+This is mostly a reminder on how to bump and publish a new version.
+
+    # Login to Hex
+    rebar3 hex user auth
+    # Cut new version with hex
+    rebar3 hex cut
