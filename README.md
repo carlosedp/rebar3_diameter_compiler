@@ -58,9 +58,11 @@ The plugin will be ran on compile and clean commands or call your plugin directl
 Test
 -----
 
-This test compiles a `.dia` file for validation
+One test compiles a `.dia` file for validation, another compares the generated erl/hrl files with the expected files in `test/expected` directory.
 
     rebar3 eunit
+
+If the format changes in the future(for example due a compiler change), the expected files can be re-generated with `GOLDEN_RUN=1 rebar3 unit`. This will overwrite the existing expected files.
 
 Publishing new versions
 -----

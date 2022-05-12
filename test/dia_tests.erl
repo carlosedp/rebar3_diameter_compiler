@@ -5,6 +5,9 @@
 compile_test_() ->
     {setup, fun() -> setup() end, [fun() -> test_compile() end]}.
 
+compare_test() ->
+    compare_files().
+
 %% Internal
 
 diameter_basename() ->
@@ -91,7 +94,7 @@ test_compile() ->
     ok = file:set_cwd(Test_target),
     %	Result = os:cmd( "DIAGNOSTIC=1 rebar3 eunit" ),
     %	?debugMsg( Result ),
-    ?assertCmd("rebar3 eunit"),
+    ?assertCmd("rebar3 diameter compile"),
     true =
         filelib:is_regular(
             filename:join("include", diameter_basename() ++ ".hrl")),
@@ -108,3 +111,42 @@ test_target(Repo) ->
                    "rebar3_diameter_compiler",
                    "test",
                    "compile"]).
+
+compare_files() ->
+    Golden = os:getenv("GOLDEN_RUN"),
+    golden_run(Golden, "erl", "src"),
+    golden_run(Golden, "hrl", "include"),
+
+    compare_files("erl", "src"),
+    compare_files("hrl", "include").
+
+golden_run(Val, Ext, Dir) ->
+    case Val of
+        false ->
+            true;
+        _ ->
+            {ok, Repo} = file:get_cwd(),
+            Test_target = test_target(Repo),
+            Src = filename:join([Test_target, Dir, diameter_basename() ++ "." ++ Ext]),
+            Dst = filename:join([Repo,
+                                 "test/expected/" ++ Dir,
+                                 diameter_basename() ++ "." ++ Ext ++ "-expected"]),
+            ?debugMsg("Copying " ++ Src ++ " file to " ++ Dst),
+            file:copy(Src, Dst)
+    end.
+
+compare_files(Ext, Dir) ->
+    {ok, Repo} = file:get_cwd(),
+    Test_target = test_target(Repo),
+    Generated = filename:join([Test_target, Dir, diameter_basename() ++ "." ++ Ext]),
+    ok = filelib:ensure_dir(Generated),
+    {ok, Gen} = file:read_file(Generated),
+    F1 = binary:split(Gen, <<"\n">>, [global]),
+    Expected =
+        filename:join([Repo,
+                       "test/expected/" ++ Dir,
+                       diameter_basename() ++ "." ++ Ext ++ "-expected"]),
+    ok = filelib:ensure_dir(Expected),
+    {ok, Exp} = file:read_file(Expected),
+    F2 = binary:split(Exp, <<"\n">>, [global]),
+    ?assertEqual(F1, F2).
