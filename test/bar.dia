@@ -1,0 +1,10 @@
+@name   'bar'
+
+@vendor 10415 3GPP
+
+@inherits foo
+
+@avp_types
+
+Bar                        1 Unsigned32    V
+

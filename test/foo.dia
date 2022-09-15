@@ -1,0 +1,8 @@
+@name   'foo'
+
+@vendor 10415 3GPP
+
+@avp_types
+
+Foo                        3 Unsigned32    V
+

@@ -2,8 +2,11 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+compile_only_test_() ->
+    {setup, fun() -> setup("baz") end, [fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end]}.
+
 compile_test_() ->
-    {setup, fun() -> setup() end, [fun() -> test_compile() end]}.
+    {setup, fun() -> setup() end, [fun() -> test_compile(diameter_files(), []) end]}.
 
 compare_test() ->
     compare_files().
@@ -13,20 +16,31 @@ compare_test() ->
 diameter_basename() ->
     "diameter_3gpp_base".
 
+diameter_files() ->
+    [
+        diameter_basename(),
+        "foo",
+        "bar",
+        "baz"
+    ].
+
 setup() ->
+    setup(undefined).
+
+setup(Only) ->
     {ok, Repo} = file:get_cwd(),
     Branch = setup_git_branch(),
     Test_target = test_target(Repo),
     setup_delete(Test_target),
-    setup_create(Test_target, Repo, Branch).
+    setup_create(Test_target, Repo, Branch, Only).
 
-setup_create(Test_target, Repo, Branch) ->
-    ok = setup_create_dia(Test_target),
+setup_create(Test_target, Repo, Branch, Only) ->
+    [ok = setup_create_dia(Test_target, X) || X <- diameter_files()],
     ok = setup_create_src(Test_target),
-    ok = setup_create_rebar_config(Test_target, Repo, Branch).
+    ok = setup_create_rebar_config(Test_target, Repo, Branch, Only).
 
-setup_create_dia(Test_target) ->
-    Diameter_file = diameter_basename() ++ ".dia",
+setup_create_dia(Test_target, BaseName) ->
+    Diameter_file = BaseName ++ ".dia",
     File = filename:join([Test_target, "dia", Diameter_file]),
     ok = filelib:ensure_dir(File),
     {ok, _} =
@@ -53,10 +67,10 @@ setup_create_src_content(App) ->
 ]}.
 ".
 
-setup_create_rebar_config(Test_target, Repo, Branch) ->
+setup_create_rebar_config(Test_target, Repo, Branch, Only) ->
     File = filename:join(Test_target, "rebar.config"),
     ok = filelib:ensure_dir(File),
-    file:write_file(File, setup_rebar_config_content(Repo, Branch)).
+    file:write_file(File, setup_rebar_config_content(Repo, Branch, Only)).
 
 setup_delete(Directory) ->
     Paths =
@@ -71,7 +85,7 @@ setup_git_branch() ->
     string:trim(
         os:cmd("git branch --show-current")).
 
-setup_rebar_config_content(Repo, Branch) ->
+setup_rebar_config_content(Repo, Branch, undefined) ->
     "
 {plugins, [
 \t{rebar3_diameter_compiler, {git, \"file://"
@@ -86,21 +100,50 @@ setup_rebar_config_content(Repo, Branch) ->
 \t	{compile, {diameter, compile}}
 \t]}
 ]}.
+";
+
+setup_rebar_config_content(Repo, Branch, Only) ->
+    "
+{plugins, [
+\t{rebar3_diameter_compiler, {git, \"file://"
+    ++ Repo
+    ++ "\", {branch, \""
+    ++ Branch
+    ++ "\"}}}
+]}.
+{provider_hooks, [
+\t{pre, [
+\t	{clean, {diameter, clean}},
+\t	{compile, {diameter, compile}}
+\t]}
+]}.
+{dia_only_files, [" ++ Only ++ "]}.
 ".
 
-test_compile() ->
+
+test_compile(CompiledFiles, SkippedFiles) ->
     {ok, Repo} = file:get_cwd(),
     Test_target = test_target(Repo),
     ok = file:set_cwd(Test_target),
     %	Result = os:cmd( "DIAGNOSTIC=1 rebar3 eunit" ),
     %	?debugMsg( Result ),
     ?assertCmd("rebar3 diameter compile"),
-    true =
-        filelib:is_regular(
-            filename:join("include", diameter_basename() ++ ".hrl")),
-    true =
-        filelib:is_regular(
-            filename:join("src", diameter_basename() ++ ".erl")),
+    [
+        ?assert(filelib:is_regular(filename:join("include", File ++ ".hrl")))
+        || File <- CompiledFiles
+    ],
+    [
+        ?assert(filelib:is_regular(filename:join("src", File ++ ".erl"))) 
+        || File <- CompiledFiles
+    ],
+    [
+        ?assertNot(filelib:is_regular(filename:join("include", File ++ ".hrl"))) 
+        || File <- SkippedFiles
+    ],
+    [
+        ?assertNot(filelib:is_regular(filename:join("src", File ++ ".erl"))) 
+        || File <- SkippedFiles
+    ],
     file:set_cwd(Repo).
 
 test_target(Repo) ->

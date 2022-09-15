@@ -1,0 +1,10 @@
+@name   'baz'
+
+@vendor 10415 3GPP
+
+@inherits bar
+
+@avp_types
+
+Baz                        2 Unsigned32    V
+
