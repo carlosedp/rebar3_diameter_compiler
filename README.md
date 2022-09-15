@@ -58,7 +58,7 @@ The plugin will be ran on compile and clean commands or call your plugin directl
 
 The option specified below allows to compile only specific diameter dictionaries
 
-```
+```erlang
 {dia_only_files, [
     your_dictionary
     ]}.
