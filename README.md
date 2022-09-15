@@ -55,6 +55,15 @@ The plugin will be ran on compile and clean commands or call your plugin directl
     $ rebar3 diameter clean
     ===> Cleaning diameter compiled files...
 
+
+The option specified below allows to compile only specific diameter dictionaries
+
+```
+{dia_only_files, [
+    your_dictionary
+    ]}.
+```
+
 Test
 -----
 

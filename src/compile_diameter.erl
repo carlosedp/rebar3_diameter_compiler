@@ -67,14 +67,21 @@ compile(State, AppFile) ->
     DiaFiles = rebar_utils:find_files(DiaDir, DiaExtRe, Recursive),
     rebar_api:debug("Diameter files: ~p~n", [DiaFiles]),
 
-    CompileFun =
-        fun(Source, Target, C) -> compile_dia(C, Source, Target, {AppDir, EbinDir}) end,
+    
 
-    case compile_order(DiaFiles, DiaOpts) of
+    case compile_order(DiaFiles, DiaOpts, State) of
         {error, Reason} ->
             rebar_api:error("DIAMETER error: ~p~n", [Reason]);
         {ok, Order} ->
             rebar_api:debug("Diameter Order: ~p~n", [Order]),
+            
+            CompileFun = fun(Source, Target, C) -> 
+                case lists:member(Source, Order) of
+                    true -> compile_dia(C, Source, Target, {AppDir, EbinDir});
+                    false -> ok
+                end
+            end,
+
             rebar_base_compiler:run(Opts,
                                     DiaFirst ++ Order,
                                     DiaDir,
@@ -164,7 +171,7 @@ dia_filename(File, Spec) ->
             Name
     end.
 
-compile_order(DiaFiles, _) ->
+compile_order(DiaFiles, _, State) ->
     Graph = digraph:new(),
 
     DiaMods =
@@ -192,34 +199,39 @@ compile_order(DiaFiles, _) ->
              end,
              DiaMods),
 
-    Order =
-        case digraph_utils:topsort(Graph) of
-            false ->
-                case digraph_utils:is_acyclic(Graph) of
-                    true ->
-                        {error, no_sort};
-                    false ->
-                        Cycles =
-                            lists:sort([lists:sort(Comp)
-                                        || Comp <- digraph_utils:strong_components(Graph),
-                                           length(Comp) > 1]),
-                        {error, {cycles, Cycles}}
-                end;
-            V ->
-                V1 = lists:foldl(fun(X, Acc) ->
-                                    case maps:get(X, DiaMods, undefined) of
-                                        undefined ->
-                                            Acc;
-                                        File ->
-                                            [File | Acc]
-                                    end
-                                 end,
-                                 [],
-                                 V),
-                {ok, V1}
-        end,
+    AllDicts = lists:map(fun(F) -> filename:rootname(filename:basename(F)) end, DiaFiles),
+
+    DiaOnlyFiles = rebar_state:get(State, dia_only_files, AllDicts),
+    DiaOnlyFiles1 = lists:map(fun(File) ->
+         case File of
+            F when is_list(F) -> F;
+            F when is_atom(F) -> atom_to_list(F);
+            F when is_binary(F) -> binary_to_list(F)
+        end
+    end, DiaOnlyFiles),
+
+    FilteredDicts = lists:filter(fun(F) -> lists:member(F, DiaOnlyFiles1) end, AllDicts),
+
+    Order = lists:flatmap(fun(F) ->
+        Reachable = digraph_utils:reachable([F], Graph),
+        SubGraph = digraph_utils:subgraph(Graph, Reachable),
+        TopSorted = digraph_utils:topsort(SubGraph),
+
+        true = digraph:delete(SubGraph),
+        
+        lists:foldl(fun(X, Acc) ->
+            case maps:get(X, DiaMods, undefined) of
+                undefined -> Acc;
+                File -> [File | Acc]
+            end
+        end, [], TopSorted)
+
+    end, FilteredDicts),
+
     true = digraph:delete(Graph),
-    Order.
+
+    {ok, uniq(Order)}.
+
 
 %% taken from rebar_digraph:
 %% @private Add a package and its dependencies to an existing digraph
@@ -256,3 +268,17 @@ add(Graph, {PkgName, Deps}) ->
                      digraph:add_edge(Graph, V, V3)
                   end,
                   Deps).
+
+
+uniq(L) ->
+    uniq_1(L, #{}).
+
+uniq_1([X | Xs], M) ->
+    case is_map_key(X, M) of
+        true ->
+            uniq_1(Xs, M);
+        false ->
+            [X | uniq_1(Xs, M#{X => true})]
+    end;
+uniq_1([], _) ->
+    [].
