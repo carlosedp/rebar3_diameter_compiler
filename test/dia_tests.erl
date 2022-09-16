@@ -3,7 +3,9 @@
 -include_lib("eunit/include/eunit.hrl").
 
 compile_only_test_() ->
-    {setup, fun() -> setup("baz") end, [fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end]}.
+    {setup, fun() -> setup("baz") end, [
+        fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end
+    ]}.
 
 compile_test_() ->
     {setup, fun() -> setup() end, [fun() -> test_compile(diameter_files(), []) end]}.
@@ -45,7 +47,8 @@ setup_create_dia(Test_target, BaseName) ->
     ok = filelib:ensure_dir(File),
     {ok, _} =
         file:copy(
-            filename:join("test", Diameter_file), File),
+            filename:join("test", Diameter_file), File
+        ),
     ok.
 
 setup_create_src(Test_target) ->
@@ -55,17 +58,16 @@ setup_create_src(Test_target) ->
     file:write_file(File, setup_create_src_content(App)).
 
 setup_create_src_content(App) ->
-    "
-{application, "
-    ++ App
-    ++ ", [
-\t{description, \""
-    ++ App
-    ++ "\"},
-\t{vsn, \"1.0\"},
-\t{applications, [kernel,stdlib]}
-]}.
-".
+    "\n"
+    "{application, " ++
+        App ++
+        ", [\n"
+        "\t{description, \"" ++
+        App ++
+        "\"},\n"
+        "\t{vsn, \"1.0\"},\n"
+        "\t{applications, [kernel,stdlib]}\n"
+        "]}.\n".
 
 setup_create_rebar_config(Test_target, Repo, Branch, Only) ->
     File = filename:join(Test_target, "rebar.config"),
@@ -75,7 +77,8 @@ setup_create_rebar_config(Test_target, Repo, Branch, Only) ->
 setup_delete(Directory) ->
     Paths =
         filelib:wildcard(
-            filename:join(Directory, "*")),
+            filename:join(Directory, "*")
+        ),
     {Directories, Files} = lists:partition(fun filelib:is_dir/1, Paths),
     [file:delete(X) || X <- Files],
     [setup_delete(X) || X <- Directories],
@@ -83,43 +86,40 @@ setup_delete(Directory) ->
 
 setup_git_branch() ->
     string:trim(
-        os:cmd("git branch --show-current")).
+        os:cmd("git branch --show-current")
+    ).
 
 setup_rebar_config_content(Repo, Branch, undefined) ->
-    "
-{plugins, [
-\t{rebar3_diameter_compiler, {git, \"file://"
-    ++ Repo
-    ++ "\", {branch, \""
-    ++ Branch
-    ++ "\"}}}
-]}.
-{provider_hooks, [
-\t{pre, [
-\t	{clean, {diameter, clean}},
-\t	{compile, {diameter, compile}}
-\t]}
-]}.
-";
-
+    "\n"
+    "{plugins, [\n"
+    "\t{rebar3_diameter_compiler, {git, \"file://" ++
+        Repo ++
+        "\", {branch, \"" ++
+        Branch ++
+        "\"}}}\n"
+        "]}.\n"
+        "{provider_hooks, [\n"
+        "\t{pre, [\n"
+        "\t	{clean, {diameter, clean}},\n"
+        "\t	{compile, {diameter, compile}}\n"
+        "\t]}\n"
+        "]}.\n";
 setup_rebar_config_content(Repo, Branch, Only) ->
-    "
-{plugins, [
-\t{rebar3_diameter_compiler, {git, \"file://"
-    ++ Repo
-    ++ "\", {branch, \""
-    ++ Branch
-    ++ "\"}}}
-]}.
-{provider_hooks, [
-\t{pre, [
-\t	{clean, {diameter, clean}},
-\t	{compile, {diameter, compile}}
-\t]}
-]}.
-{dia_only_files, [" ++ Only ++ "]}.
-".
-
+    "\n"
+    "{plugins, [\n"
+    "\t{rebar3_diameter_compiler, {git, \"file://" ++
+        Repo ++
+        "\", {branch, \"" ++
+        Branch ++
+        "\"}}}\n"
+        "]}.\n"
+        "{provider_hooks, [\n"
+        "\t{pre, [\n"
+        "\t	{clean, {diameter, clean}},\n"
+        "\t	{compile, {diameter, compile}}\n"
+        "\t]}\n"
+        "]}.\n"
+        "{dia_only_files, [" ++ Only ++ "]}.\n".
 
 test_compile(CompiledFiles, SkippedFiles) ->
     {ok, Repo} = file:get_cwd(),
@@ -130,30 +130,32 @@ test_compile(CompiledFiles, SkippedFiles) ->
     ?assertCmd("rebar3 diameter compile"),
     [
         ?assert(filelib:is_regular(filename:join("include", File ++ ".hrl")))
-        || File <- CompiledFiles
+     || File <- CompiledFiles
     ],
     [
-        ?assert(filelib:is_regular(filename:join("src", File ++ ".erl"))) 
-        || File <- CompiledFiles
+        ?assert(filelib:is_regular(filename:join("src", File ++ ".erl")))
+     || File <- CompiledFiles
     ],
     [
-        ?assertNot(filelib:is_regular(filename:join("include", File ++ ".hrl"))) 
-        || File <- SkippedFiles
+        ?assertNot(filelib:is_regular(filename:join("include", File ++ ".hrl")))
+     || File <- SkippedFiles
     ],
     [
-        ?assertNot(filelib:is_regular(filename:join("src", File ++ ".erl"))) 
-        || File <- SkippedFiles
+        ?assertNot(filelib:is_regular(filename:join("src", File ++ ".erl")))
+     || File <- SkippedFiles
     ],
     file:set_cwd(Repo).
 
 test_target(Repo) ->
-    filename:join([Repo,
-                   "_build",
-                   "test",
-                   "lib",
-                   "rebar3_diameter_compiler",
-                   "test",
-                   "compile"]).
+    filename:join([
+        Repo,
+        "_build",
+        "test",
+        "lib",
+        "rebar3_diameter_compiler",
+        "test",
+        "compile"
+    ]).
 
 compare_files() ->
     Golden = os:getenv("GOLDEN_RUN"),
@@ -171,9 +173,11 @@ golden_run(Val, Ext, Dir) ->
             {ok, Repo} = file:get_cwd(),
             Test_target = test_target(Repo),
             Src = filename:join([Test_target, Dir, diameter_basename() ++ "." ++ Ext]),
-            Dst = filename:join([Repo,
-                                 "test/expected/" ++ Dir,
-                                 diameter_basename() ++ "." ++ Ext ++ "-expected"]),
+            Dst = filename:join([
+                Repo,
+                "test/expected/" ++ Dir,
+                diameter_basename() ++ "." ++ Ext ++ "-expected"
+            ]),
             ?debugMsg("Copying " ++ Src ++ " file to " ++ Dst),
             file:copy(Src, Dst)
     end.
@@ -186,9 +190,11 @@ compare_files(Ext, Dir) ->
     {ok, Gen} = file:read_file(Generated),
     F1 = binary:split(Gen, <<"\n">>, [global]),
     Expected =
-        filename:join([Repo,
-                       "test/expected/" ++ Dir,
-                       diameter_basename() ++ "." ++ Ext ++ "-expected"]),
+        filename:join([
+            Repo,
+            "test/expected/" ++ Dir,
+            diameter_basename() ++ "." ++ Ext ++ "-expected"
+        ]),
     ok = filelib:ensure_dir(Expected),
     {ok, Exp} = file:read_file(Expected),
     F2 = binary:split(Exp, <<"\n">>, [global]),
