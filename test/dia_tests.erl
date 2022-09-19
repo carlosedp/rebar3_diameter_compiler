@@ -3,12 +3,13 @@
 -include_lib("eunit/include/eunit.hrl").
 
 compile_only_test_() ->
-    {setup, fun() -> setup("baz") end, [
-        fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end
-    ]}.
+    {setup, fun() -> setup("baz") end,
+        {timeout, 30, [
+            fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end
+        ]}}.
 
 compile_test_() ->
-    {setup, fun() -> setup() end, [fun() -> test_compile(diameter_files(), []) end]}.
+    {setup, fun() -> setup() end, {timeout, 30, [fun() -> test_compile(diameter_files(), []) end]}}.
 
 compare_test() ->
     compare_files().
@@ -29,12 +30,18 @@ diameter_files() ->
 setup() ->
     setup(undefined).
 
+%% Setup test/compile directory in _build/test/lib/rebar3_diameter_compiler
+%% In this directory ''rebar3 diameter compile'' will run.
+%% Replace rebar.config from repo (the one with dialyzer, etc) to save time.
+%% Getting rebar3_diameter_compiler dependencies to this directory will take some time.
+%% More than 5 seconds, less than 30 seconds on my machine.
 setup(Only) ->
     {ok, Repo} = file:get_cwd(),
     Branch = setup_git_branch(),
     Test_target = test_target(Repo),
     setup_delete(Test_target),
-    setup_create(Test_target, Repo, Branch, Only).
+    setup_create(Test_target, Repo, Branch, Only),
+    setup_test_run(test_run_directory(Repo)).
 
 setup_create(Test_target, Repo, Branch, Only) ->
     [ok = setup_create_dia(Test_target, X) || X <- diameter_files()],
@@ -121,6 +128,12 @@ setup_rebar_config_content(Repo, Branch, Only) ->
         "]}.\n"
         "{dia_only_files, [" ++ Only ++ "]}.\n".
 
+%% Simple rebar.config when running tests.
+setup_test_run(Directory) ->
+    file:write_file(
+        filename:join(Directory, "rebar.config"), "{erl_opts, [debug_info]}.\n{deps, []}.\n"
+    ).
+
 test_compile(CompiledFiles, SkippedFiles) ->
     {ok, Repo} = file:get_cwd(),
     Test_target = test_target(Repo),
@@ -146,13 +159,18 @@ test_compile(CompiledFiles, SkippedFiles) ->
     ],
     file:set_cwd(Repo).
 
-test_target(Repo) ->
+test_run_directory(Repo) ->
     filename:join([
         Repo,
         "_build",
         "test",
         "lib",
-        "rebar3_diameter_compiler",
+        "rebar3_diameter_compiler"
+    ]).
+
+test_target(Repo) ->
+    filename:join([
+        test_run_directory(Repo),
         "test",
         "compile"
     ]).
