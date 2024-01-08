@@ -7,11 +7,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Erlang/OTP ${{ matrix.otp }} / rebar3 ${{ matrix.rebar }}
+    name: Erlang/OTP ${{ matrix.otp }}
     strategy:
       matrix:
         otp: ["24", "25", "26"]
-        rebar: ["3.19.0", "3.22.1"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,7 +19,6 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-          rebar3-version: ${{ matrix.rebar }}
 
       - name: Run tests
         run: ./rebar3 do eunit, ct
