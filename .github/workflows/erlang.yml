@@ -1,17 +1,17 @@
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
   pull_request:
-    branches: [ '*' ]
+    branches: ["*"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
+    name: Erlang/OTP ${{ matrix.otp }} / rebar3 ${{ matrix.rebar3 }}
     strategy:
       matrix:
-        otp: ['23', '24', '25']
-        rebar: ['3.19.0']
+        otp: ["23", "24", "25", "26"]
+        rebar: ["3.19.0"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,7 +20,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
-          rebar3-version: ${{matrix.rebar3}}
+          rebar3-version: ${{ matrix.rebar3 }}
 
       - name: Run tests
         run: rebar3 do eunit, ct
