@@ -52,10 +52,9 @@ setup_create_dia(Test_target, BaseName) ->
     Diameter_file = BaseName ++ ".dia",
     File = filename:join([Test_target, "dia", Diameter_file]),
     ok = filelib:ensure_dir(File),
-    {ok, _} =
-        file:copy(
-            filename:join("test", Diameter_file), File
-        ),
+    {ok, Repo} = file:get_cwd(),
+    SourceFile = filename:join([Repo, "test", Diameter_file]),
+    {ok, _} = file:copy(SourceFile, File),
     ok.
 
 setup_create_src(Test_target) ->
@@ -140,7 +139,8 @@ test_compile(CompiledFiles, SkippedFiles) ->
     ok = file:set_cwd(Test_target),
     %	Result = os:cmd( "DIAGNOSTIC=1 rebar3 eunit" ),
     %	?debugMsg( Result ),
-    ?assertCmd("rebar3 diameter compile"),
+    Rebar3Path = filename:join(Repo, "rebar3"),
+    ?assertCmd(Rebar3Path ++ " diameter compile"),
     [
         ?assert(filelib:is_regular(filename:join("include", File ++ ".hrl")))
      || File <- CompiledFiles
