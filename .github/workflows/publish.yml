@@ -1,33 +1,33 @@
 name: Publish to Hex.pm
 
 on:
-  push:
-    tags:
-      - '*'
+    push:
+        tags:
+            - "*"
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+    publish:
+        runs-on: ubuntu-latest
 
-      - name: Setup Erlang
-        uses: erlef/setup-beam@v1
-        with:
-          otp-version: "27"
-          rebar3-version: "3.25.1"
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0
 
-      - name: Run tests
-        run: rebar3 eunit
+            - name: Setup Erlang
+              uses: erlef/setup-beam@v1
+              with:
+                  otp-version: "27"
+                  rebar3-version: "3.25.1"
 
-      - name: Generate documentation  
-        run: rebar3 edoc
+            - name: Run tests
+              run: rebar3 eunit
 
-      - name: Publish to Hex.pm
-        run: rebar3 hex publish --yes
-        env:
-          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+            - name: Generate documentation
+              run: rebar3 edoc
+
+            - name: Publish to Hex.pm
+              run: rebar3 hex publish --yes
+              env:
+                  HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
