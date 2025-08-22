@@ -10,34 +10,88 @@
 <hr>
 
 <h1>Module compile_diameter</h1>
-<ul class="index"><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>  
+Rebar3 plugin for compiling Diameter protocol dictionary files (.dia).
 
+<p><b>Introduced in:</b> 1.0.0</p>
+<p><b>Authors:</b> Carlos Eduardo de Paula.</p>
 
+<h2><a name="description">Description</a></h2><p>  
+Rebar3 plugin for compiling Diameter protocol dictionary files (.dia).</p>
+ 
+  <p>This module provides compilation support for Diameter protocol dictionary files  
+in rebar3 projects. It automatically discovers .dia files in the dia/ directory,  
+resolves dependencies based on @inherits directives, and generates corresponding  
+.erl and .hrl files for use with Erlang's diameter application.</p>
+ 
+  <h3><a name="Configuration">Configuration</a></h3>
+ 
+  The plugin supports the following rebar.config options:
+  <pre>  {dia_opts, [
+      {outdir, "custom_src"},           % Output directory for .erl files (default: "src")
+      {include, ["path/to/deps"]},      % Additional include paths
+      {recursive, true}                 % Recursively search for .dia files (default: true)
+  ]}.
+ 
+  {dia_first_files, [
+      "base_dictionary.dia"             % Files to compile first
+  ]}.
+ 
+  {dia_only_files, [
+      "specific_dict"                   % Only compile these dictionaries
+  ]}.</pre>
+ 
+  <h3><a name="Usage">Usage</a></h3>
+ 
+  The plugin is typically invoked automatically via provider hooks:
+  <pre>  rebar3 diameter compile</pre>
+ 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#do-1">do/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#do-1">do/1</a></td><td>Execute the diameter compilation process.</td></tr>
+<tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td>Format error messages for user display.</td></tr>
+<tr><td valign="top"><a href="#init-1">init/1</a></td><td>Initialize the diameter compile provider.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
 <h3 class="function"><a name="do-1">do/1</a></h3>
 <div class="spec">
-<p><code>do(State::<a href="/home/carlosedp/repos/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>) -&gt; {ok, <a href="/home/carlosedp/repos/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>}</code><br></p>
-<p> </p>
-</div>
+<p><pre>do(State :: <a href="http://www.erlang.org/doc/man/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>) -&gt; {ok, <a href="http://www.erlang.org/doc/man/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>}</pre></p>
+<p><code>State</code>: The current rebar3 state<br>
+</p>
+<p>returns: {ok, State} on successful compilation</p>
+</div><p><p>Execute the diameter compilation process.</p>
+ 
+  This function performs the main compilation work:
+  <ol>
+  <li>Discovers all .dia files in the project</li>
+  <li>Resolves dependencies between dictionaries</li>
+  <li>Compiles files in dependency order</li>
+  <li>Generates .erl and .hrl files</li>
+  </ol>
+ </p>
 
 <h3 class="function"><a name="format_error-1">format_error/1</a></h3>
 <div class="spec">
-<p><code>format_error(Reason::any()) -&gt; iolist()</code><br></p>
-<p> </p>
-</div>
+<p><pre>format_error(Reason :: any()) -&gt; iolist()</pre></p>
+<p><code>Reason</code>: The error term to format<br>
+</p>
+<p>returns: Formatted error message as iolist</p>
+</div><p>Format error messages for user display.
+ </p>
 
 <h3 class="function"><a name="init-1">init/1</a></h3>
 <div class="spec">
-<p><code>init(State::<a href="/home/carlosedp/repos/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>) -&gt; {ok, <a href="/home/carlosedp/repos/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>}</code><br></p>
-<p> </p>
-</div>
+<p><pre>init(State :: <a href="http://www.erlang.org/doc/man/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>) -&gt; {ok, <a href="http://www.erlang.org/doc/man/rebar/doc/rebar_state.html#type-t" docgen-rel="seetype" docgen-href="rebar:rebar_state#t/0">rebar_state:t()</a>}</pre></p>
+<p><code>State</code>: The current rebar3 state<br>
+</p>
+<p>returns: {ok, UpdatedState} with the provider registered</p>
+</div><p><p>Initialize the diameter compile provider.</p>
+ 
+  Sets up the rebar3 provider for compiling diameter files. This function
+  registers the provider with the rebar3 system and defines its properties
+  such as dependencies, description, and command-line options.
+ </p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

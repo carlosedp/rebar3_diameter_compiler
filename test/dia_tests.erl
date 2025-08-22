@@ -1,16 +1,48 @@
+%% @doc
+%% Integration tests for rebar3_diameter_compiler plugin.
+%%
+%% This module provides comprehensive integration tests that verify the plugin
+%% works correctly in a real rebar3 environment. The tests:
+%%
+%% <ul>
+%% <li>Set up a temporary rebar3 project with the plugin</li>
+%% <li>Test compilation of .dia files with dependencies</li>
+%% <li>Verify generated .erl and .hrl files match expected output</li>
+%% <li>Test across different OTP versions for compatibility</li>
+%% </ul>
+%%
+%% The tests use git-based plugin loading to simulate real-world usage patterns
+%% and ensure the plugin integrates correctly with rebar3's build system.
+%%
+%% @author Carlos Eduardo de Paula
+%% @since 1.0.0
+%% @end
 -module(dia_tests).
 
 -include_lib("eunit/include/eunit.hrl").
 
+%% @doc Test compilation with limited file set.
+%%
+%% This test verifies that the dia_only_files configuration works correctly
+%% by compiling only a subset of available .dia files.
 compile_only_test_() ->
     {setup, fun() -> setup("baz") end,
         {timeout, 30, [
             fun() -> test_compile(["foo", "bar", "baz"], [diameter_basename()]) end
         ]}}.
 
+%% @doc Test full compilation of all diameter files.
+%%
+%% This test compiles all available .dia files and verifies that the
+%% compilation process completes successfully with proper dependency resolution.
 compile_test_() ->
     {setup, fun() -> setup() end, {timeout, 30, [fun() -> test_compile(diameter_files(), []) end]}}.
 
+%% @doc Test generated output matches expected files.
+%%
+%% This test compares the generated .erl files against known-good expected
+%% output to verify that the compilation produces correct results. It includes
+%% cross-OTP version compatibility by filtering out version-specific differences.
 compare_test() ->
     compare_files().
 

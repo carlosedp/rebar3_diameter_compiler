@@ -18,3 +18,6 @@ _tdeps
 logs
 _build
 rebar3.crashdump
+
+# Hex publishing artifacts
+*.tar

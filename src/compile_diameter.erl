@@ -1,3 +1,40 @@
+%% @doc
+%% Rebar3 plugin for compiling Diameter protocol dictionary files (.dia).
+%%
+%% This module provides compilation support for Diameter protocol dictionary files
+%% in rebar3 projects. It automatically discovers .dia files in the dia/ directory,
+%% resolves dependencies based on @inherits directives, and generates corresponding
+%% .erl and .hrl files for use with Erlang's diameter application.
+%%
+%% == Configuration ==
+%%
+%% The plugin supports the following rebar.config options:
+%% ```
+%% {dia_opts, [
+%%     {outdir, "custom_src"},           % Output directory for .erl files (default: "src")
+%%     {include, ["path/to/deps"]},      % Additional include paths
+%%     {recursive, true}                 % Recursively search for .dia files (default: true)
+%% ]}.
+%%
+%% {dia_first_files, [
+%%     "base_dictionary.dia"             % Files to compile first
+%% ]}.
+%%
+%% {dia_only_files, [
+%%     "specific_dict"                   % Only compile these dictionaries
+%% ]}.
+%% '''
+%%
+%% == Usage ==
+%%
+%% The plugin is typically invoked automatically via provider hooks:
+%% ```
+%% rebar3 diameter compile
+%% '''
+%%
+%% @author Carlos Eduardo de Paula
+%% @since 1.0.0
+%% @end
 -module(compile_diameter).
 
 -export([init/1, do/1, format_error/1]).
@@ -8,6 +45,16 @@
 %% ===================================================================
 %% Public API
 %% ===================================================================
+
+%% @doc Initialize the diameter compile provider.
+%%
+%% Sets up the rebar3 provider for compiling diameter files. This function
+%% registers the provider with the rebar3 system and defines its properties
+%% such as dependencies, description, and command-line options.
+%%
+%% @param State The current rebar3 state
+%% @returns {ok, UpdatedState} with the provider registered
+%% @end
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State) ->
     Provider =
@@ -31,6 +78,19 @@ init(State) ->
         ]),
     {ok, rebar_state:add_provider(State, Provider)}.
 
+%% @doc Execute the diameter compilation process.
+%%
+%% This function performs the main compilation work:
+%% <ol>
+%% <li>Discovers all .dia files in the project</li>
+%% <li>Resolves dependencies between dictionaries</li>
+%% <li>Compiles files in dependency order</li>
+%% <li>Generates .erl and .hrl files</li>
+%% </ol>
+%%
+%% @param State The current rebar3 state
+%% @returns {ok, State} on successful compilation
+%% @end
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()}.
 do(State) ->
     rebar_api:info("Compiling diameter files...", []),
@@ -44,6 +104,19 @@ do(State) ->
     lists:foreach(fun(App) -> compile(State, App) end, Apps),
     {ok, State}.
 
+%% @doc Compile diameter files for a specific application.
+%%
+%% This function handles the compilation process for a single application:
+%% <ul>
+%% <li>Sets up directory paths and code paths</li>
+%% <li>Discovers .dia files using configurable patterns</li>
+%% <li>Determines compilation order based on dependencies</li>
+%% <li>Invokes the rebar base compiler with diameter-specific logic</li>
+%% </ul>
+%%
+%% @param State The rebar3 state containing configuration
+%% @param AppFile Application info containing directories and options
+%% @end
 compile(State, AppFile) ->
     Opts = rebar_app_info:opts(AppFile),
     AppDir = rebar_app_info:dir(AppFile),
@@ -97,6 +170,11 @@ compile(State, AppFile) ->
             )
     end.
 
+%% @doc Format error messages for user display.
+%%
+%% @param Reason The error term to format
+%% @returns Formatted error message as iolist
+%% @end
 -spec format_error(any()) -> iolist().
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).
@@ -105,9 +183,13 @@ format_error(Reason) ->
 %% Internal functions
 %% ===================================================================
 
+%% @doc Return short description for the provider.
+%% @private
 short_desc() ->
     "Build Diameter (*.dia) sources".
 
+%% @doc Return detailed description and configuration help.
+%% @private
 desc() ->
     short_desc() ++
         "\n"
@@ -117,6 +199,22 @@ desc() ->
         "                  exception of inherits)~n"
         "  {dia_first_files, []} (files in sequence to compile first)~n".
 
+%% @doc Compile a single diameter dictionary file.
+%%
+%% This function handles the compilation of one .dia file:
+%% <ol>
+%% <li>Parses the diameter dictionary specification</li>
+%% <li>Generates .erl and .hrl files using diameter_codegen</li>
+%% <li>Compiles the generated .erl file to .beam</li>
+%% <li>Loads the compiled module for immediate use</li>
+%% </ol>
+%%
+%% @param Config Rebar configuration options
+%% @param Source Path to the source .dia file
+%% @param Target Path where the generated .erl file should be placed
+%% @param {AppDir, EbinDir} Tuple of application and binary directories
+%% @returns ok on success, logs errors and returns error term on failure
+%% @end
 -spec compile_dia(
     rebar_config:config(),
     file:filename(),
@@ -178,6 +276,16 @@ compile_dia(Config, Source, Target, {AppDir, EbinDir}) ->
             )
     end.
 
+%% @doc Extract the dictionary name from file or spec.
+%%
+%% Determines the name to use for generated files. Uses the 'name' field
+%% from the diameter specification if present, otherwise derives it from
+%% the source filename.
+%%
+%% @param File Path to the source .dia file
+%% @param Spec Parsed diameter dictionary specification
+%% @returns String name for the dictionary
+%% @private
 dia_filename(File, Spec) ->
     case proplists:get_value(name, Spec) of
         undefined ->
@@ -188,6 +296,25 @@ dia_filename(File, Spec) ->
             Name
     end.
 
+%% @doc Determine compilation order based on dependencies.
+%%
+%% This function analyzes @inherits directives in .dia files to build a
+%% dependency graph and determine the correct compilation order. Files that
+%% are inherited by others must be compiled first.
+%%
+%% The algorithm:
+%% <ol>
+%% <li>Parse each .dia file to extract @inherits directives</li>
+%% <li>Build a directed graph of dependencies</li>
+%% <li>Perform topological sort to determine compilation order</li>
+%% <li>Filter based on dia_only_files configuration if specified</li>
+%% </ol>
+%%
+%% @param DiaFiles List of discovered .dia file paths
+%% @param _DiaOpts Diameter compilation options (currently unused)
+%% @param State Rebar3 state containing configuration
+%% @returns {ok, OrderedFileList} with files in dependency order
+%% @private
 compile_order(DiaFiles, _, State) ->
     Graph = digraph:new(),
 
@@ -263,8 +390,17 @@ compile_order(DiaFiles, _, State) ->
 
     {ok, uniq(Order)}.
 
-%% taken from rebar_digraph:
-%% @private Add a package and its dependencies to an existing digraph
+%% @doc Add a package and its dependencies to a digraph.
+%%
+%% Helper function adapted from rebar_digraph for building dependency graphs.
+%% Creates vertices and edges in the graph to represent inheritance relationships.
+%%
+%% Originally taken from rebar_digraph.
+%%
+%% @param Graph The digraph to modify
+%% @param {PkgName, Deps} Package name and list of its dependencies
+%% @returns ok
+%% @private
 -spec add(digraph:graph(), {PkgName, [Dep]}) -> ok when
     PkgName :: binary(),
     Dep :: {Name, term()} | Name,
@@ -302,9 +438,18 @@ add(Graph, {PkgName, Deps}) ->
         Deps
     ).
 
+%% @doc Remove duplicates from a list while preserving order.
+%%
+%% Efficient deduplication using a map to track seen elements.
+%% The first occurrence of each element is kept.
+%%
+%% @param L Input list that may contain duplicates
+%% @returns List with duplicates removed, order preserved
+%% @private
 uniq(L) ->
     uniq_1(L, #{}).
 
+%% @private Helper for uniq/1
 uniq_1([X | Xs], M) ->
     case is_map_key(X, M) of
         true ->

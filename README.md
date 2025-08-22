@@ -80,3 +80,6 @@ This is mostly a reminder on how to bump and publish a new version.
     rebar3 hex user auth
     # Cut new version with hex
     rebar3 hex cut
+
+
+Check the full guide at [HEX_PUBLISHING.md](HEX_PUBLISHING.md).
