@@ -54,8 +54,13 @@ setup_create_dia(Test_target, BaseName) ->
     ok = filelib:ensure_dir(File),
     {ok, Repo} = file:get_cwd(),
     SourceFile = filename:join([Repo, "test", Diameter_file]),
-    {ok, _} = file:copy(SourceFile, File),
-    ok.
+    case filelib:is_regular(SourceFile) of
+        true ->
+            {ok, _} = file:copy(SourceFile, File),
+            ok;
+        false ->
+            error({source_file_not_found, SourceFile, Repo})
+    end.
 
 setup_create_src(Test_target) ->
     App = "compile",
@@ -91,9 +96,28 @@ setup_delete(Directory) ->
     file:del_dir(Directory).
 
 setup_git_branch() ->
-    string:trim(
-        os:cmd("git branch --show-current")
-    ).
+    % In CI environments, we might be in detached HEAD state
+    % Try multiple GitHub Actions environment variables
+    case os:getenv("GITHUB_HEAD_REF") of
+        false ->
+            case os:getenv("GITHUB_REF_NAME") of
+                false ->
+                    % No GitHub environment, try git command
+                    Branch = string:trim(os:cmd("git branch --show-current")),
+                    case Branch of
+                        "" ->
+                            % Fallback to 'master' if we can't determine branch
+                            "master";
+                        _ ->
+                            Branch
+                    end;
+                GithubRefName ->
+                    GithubRefName
+            end;
+        GithubHeadRef ->
+            % This is set for pull requests
+            GithubHeadRef
+    end.
 
 setup_rebar_config_content(Repo, Branch, undefined) ->
     "\n"
@@ -139,8 +163,15 @@ test_compile(CompiledFiles, SkippedFiles) ->
     ok = file:set_cwd(Test_target),
     %	Result = os:cmd( "DIAGNOSTIC=1 rebar3 eunit" ),
     %	?debugMsg( Result ),
-    Rebar3Path = filename:join(Repo, "rebar3"),
-    ?assertCmd(Rebar3Path ++ " diameter compile"),
+    % Try to use system rebar3 first (for CI), then local rebar3
+    Rebar3Cmd = case os:find_executable("rebar3") of
+        false ->
+            % No system rebar3, use local one
+            filename:join(Repo, "rebar3");
+        SystemRebar3 ->
+            SystemRebar3
+    end,
+    ?assertCmd(Rebar3Cmd ++ " diameter compile"),
     [
         ?assert(filelib:is_regular(filename:join("include", File ++ ".hrl")))
      || File <- CompiledFiles
