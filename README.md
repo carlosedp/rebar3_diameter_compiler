@@ -1,35 +1,17 @@
-rebar3_diameter_compiler
-=====
+# rebar3_diameter_compiler
 
-Compile [diameter](http://erlang.org/doc/man/diameter.html) .dia files in rebar3 projects
+Compile [diameter](http://erlang.org/doc/man/diameter.html) `.dia` files in rebar3 projects
 
 [![Erlang CI](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml/badge.svg)](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml)
  [![Hex pm](http://img.shields.io/hexpm/v/rebar3_diameter_compiler.svg?style=flat)](https://hex.pm/packages/rebar3_diameter_compiler)
 
-Build
------
+## Build
 
     ./rebar3 compile
 
-Use
----
+## Use
 
-Add the plugin to your rebar config from Github:
-
-```erlang
-{plugins, [
-    { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
-]}.
-
-{provider_hooks, [
-    {pre, [
-        {compile, {diameter, compile}},
-        {clean, {diameter, clean}}
-    ]}
-]}.
-```
-
-Or fetch the plugin using Hex.pm:
+Add the plugin to your rebar config from Hex.pm (published version):
 
 ```erlang
 {plugins, [
@@ -44,8 +26,22 @@ Or fetch the plugin using Hex.pm:
 ]}.
 ```
 
+Or fetch the plugin using Github (to use the latest pushes):
 
-The plugin will be ran on compile and clean commands or call your plugin directly in an existing application:
+```erlang
+{plugins, [
+    { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
+]}.
+
+{provider_hooks, [
+    {pre, [
+        {compile, {diameter, compile}},
+        {clean, {diameter, clean}}
+    ]}
+]}.
+```
+
+The plugin will run on compile and clean commands (like `rebar3 compile` and `rebar3 clean`). You can also call your plugin directly in an existing application:
 
     $ rebar3 diameter compile
     ===> Fetching rebar3_diameter_compiler
@@ -56,16 +52,15 @@ The plugin will be ran on compile and clean commands or call your plugin directl
     ===> Cleaning diameter compiled files...
 
 
-The option specified below allows to compile only specific diameter dictionaries
+The plugin will compile all `.dia` files by default. You can use the option below to compile only specific diameter dictionaries
 
 ```erlang
 {dia_only_files, [
-    your_dictionary
+    your_dictionary_name
     ]}.
 ```
 
-Test
------
+## Testing
 
 One test compiles a `.dia` file for validation, another compares the generated erl/hrl files with the expected files in `test/expected` directory.
 
@@ -73,8 +68,9 @@ One test compiles a `.dia` file for validation, another compares the generated e
 
 If the format changes in the future(for example due a compiler change), the expected files can be re-generated with `GOLDEN_RUN=1 rebar3 eunit`. This will overwrite the existing expected files.
 
-Publishing new versions
------
+The test filters out simple differences between OTP versions like blank lines and `-moduledoc(false).` in more recent versions.
+
+## Publishing new versions to hex.pm
 
 This is mostly a reminder on how to bump and publish a new version.
 
