@@ -1,6 +1,8 @@
 # rebar3_diameter_compiler
 
-Compile [diameter](http://erlang.org/doc/man/diameter.html) `.dia` files in rebar3 projects
+Compile [diameter](http://erlang.org/doc/man/diameter.html) `.dia` files in rebar3 projects.
+
+Browse the [plugin documentation](https://carlosedp.github.io/rebar3_diameter_compiler/).
 
 [![Erlang CI](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml/badge.svg)](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml)
  [![Hex pm](http://img.shields.io/hexpm/v/rebar3_diameter_compiler.svg?style=flat)](https://hex.pm/packages/rebar3_diameter_compiler)
