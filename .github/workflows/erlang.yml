@@ -38,4 +38,4 @@ jobs:
           rebar3-version: ${{ matrix.rebar3 }}
 
       - name: Run tests
-        run: rebar3 do eunit
+        run: rebar3 eunit
