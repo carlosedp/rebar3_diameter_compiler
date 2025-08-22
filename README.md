@@ -78,6 +78,8 @@ This is mostly a reminder on how to bump and publish a new version.
 
     # Reformat code and generate docs
     rebar3 do edoc, format
+    # Run tests
+    rebar3 eunit
     # Login to Hex
     rebar3 hex user auth
     # Cut new version with hex
