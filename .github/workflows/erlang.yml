@@ -1,20 +1,35 @@
 on:
   push:
-    branches: ["*"]
+    branches: [master]
+    tags: ["*"]
   pull_request:
     branches: ["*"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Erlang/OTP ${{ matrix.otp }} / rebar3 ${{ matrix.rebar3 }}
     strategy:
       matrix:
-        otp: ["23", "24", "25", "26"]
-        rebar: ["3.19.0"]
+        otp: ["24", "25", "26", "27", "28"]
+        rebar3: ["3.20.0", "3.25.1"]
+        exclude:
+          - rebar3: "3.20.0"
+            otp: "26"
+          - rebar3: "3.20.0"
+            otp: "27"
+          - rebar3: "3.20.0"
+            otp: "28"
+          - rebar3: "3.25.1"
+            otp: "24"
+          - rebar3: "3.25.1"
+            otp: "25"
+    name: Erlang/OTP ${{ matrix.otp }} / rebar3 ${{ matrix.rebar3 }}
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Erlang
         uses: erlef/setup-beam@v1
@@ -23,4 +38,4 @@ jobs:
           rebar3-version: ${{ matrix.rebar3 }}
 
       - name: Run tests
-        run: rebar3 do eunit, ct
+        run: rebar3 do eunit

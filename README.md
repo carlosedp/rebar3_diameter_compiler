@@ -71,13 +71,15 @@ One test compiles a `.dia` file for validation, another compares the generated e
 
     rebar3 eunit
 
-If the format changes in the future(for example due a compiler change), the expected files can be re-generated with `GOLDEN_RUN=1 rebar3 unit`. This will overwrite the existing expected files.
+If the format changes in the future(for example due a compiler change), the expected files can be re-generated with `GOLDEN_RUN=1 rebar3 eunit`. This will overwrite the existing expected files.
 
 Publishing new versions
 -----
 
 This is mostly a reminder on how to bump and publish a new version.
 
+    # Reformat code and generate docs
+    rebar3 do edoc, format
     # Login to Hex
     rebar3 hex user auth
     # Cut new version with hex

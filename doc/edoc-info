@@ -1,0 +1,3 @@
+%% encoding: UTF-8
+{application,rebar3_diameter_compiler}.
+{modules,[clean_diameter,compile_diameter,rebar3_diameter_compiler]}.

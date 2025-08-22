@@ -4,6 +4,8 @@
 
 -module(diameter_3gpp_base).
 
+-moduledoc(false).
+
 -compile({parse_transform, diameter_exprecs}).
 
 -compile(nowarn_unused_function).
