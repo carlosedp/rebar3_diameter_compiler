@@ -184,8 +184,8 @@ setup_git_branch() ->
                     Branch = string:trim(os:cmd("git branch --show-current")),
                     case Branch of
                         "" ->
-                            % Fallback to 'master' if we can't determine branch
-                            "master";
+                            % Fallback to 'main' if we can't determine branch
+                            "main";
                         _ ->
                             Branch
                     end;
@@ -200,8 +200,8 @@ setup_git_branch() ->
                     Branch = string:trim(os:cmd("git branch --show-current")),
                     case Branch of
                         "" ->
-                            % Fallback to 'master' if we can't determine branch
-                            "master";
+                            % Fallback to 'main' if we can't determine branch
+                            "main";
                         _ ->
                             Branch
                     end;

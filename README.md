@@ -32,7 +32,7 @@ Or fetch the plugin using Github (to use the latest pushes):
 
 ```erlang
 {plugins, [
-    { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "master"}}}
+    { rebar3_diameter_compiler, {git, "https://github.com/carlosedp/rebar3_diameter_compiler.git", {branch, "main"}}}
 ]}.
 
 {provider_hooks, [
