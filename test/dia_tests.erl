@@ -267,7 +267,34 @@ test_compile(CompiledFiles, SkippedFiles) ->
             SystemRebar3 ->
                 SystemRebar3
         end,
-    ?assertCmd(Rebar3Cmd ++ " diameter compile"),
+
+    % Run compilation command and capture output
+    CompileCmd = Rebar3Cmd ++ " diameter compile",
+    % Use a unique marker for exit status that won't appear in normal output
+    Marker = "___EXIT_STATUS___",
+    FullCmd = "(" ++ CompileCmd ++ ") 2>&1; echo \"" ++ Marker ++ "$?\"",
+    Output = os:cmd(FullCmd),
+
+    % Find the marker and extract exit code
+    case string:split(Output, Marker, trailing) of
+        [OutputText, CodeWithNewline] ->
+            ExitCode = string:trim(CodeWithNewline),
+            case ExitCode of
+                "0" ->
+                    ok;
+                _ ->
+                    io:format(user, "~n=== Command Failed ===~n", []),
+                    io:format(user, "Command: ~s~n", [CompileCmd]),
+                    io:format(user, "Exit Code: ~s~n", [ExitCode]),
+                    io:format(user, "Output:~n~s~n", [OutputText]),
+                    io:format(user, "======================~n", []),
+                    error({command_failed, ExitCode})
+            end;
+        _ ->
+            % Fallback if marker not found
+            io:format(user, "~nFailed to parse command output~n", []),
+            error({command_parse_failed, Output})
+    end,
     [
         ?assert(filelib:is_regular(filename:join("include", File ++ ".hrl")))
      || File <- CompiledFiles

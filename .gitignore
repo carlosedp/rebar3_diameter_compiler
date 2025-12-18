@@ -21,3 +21,8 @@ rebar3.crashdump
 
 # Hex publishing artifacts
 *.tar
+
+# Nix build results
+result
+result-*
+.direnv

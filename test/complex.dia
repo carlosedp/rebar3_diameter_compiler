@@ -1,0 +1,14 @@
+%% @doc
+%% Complex .dia file for testing multiple inheritance.
+%%
+%% This file inherits from multiple dictionaries to test complex dependency graphs.
+@name   'complex'
+
+@inherits foo bar
+
+@vendor 10415 3GPP
+
+@avp_types
+
+Complex-Value              10 Unsigned32    V
+Complex-Data               11 OctetString   V

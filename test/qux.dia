@@ -1,0 +1,14 @@
+%% @doc
+%% Additional .dia file for testing inheritance and dependencies.
+%%
+%% This file inherits from foo to test dependency resolution.
+@name   'qux'
+
+@inherits foo
+
+@vendor 10415 3GPP
+
+@avp_types
+
+Qux-Value                  4 Unsigned32    V
+Qux-Name                   5 UTF8String    V
