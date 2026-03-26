@@ -12,15 +12,20 @@
 %% @end
 -module(property_tests).
 
--include_lib("eunit/include/eunit.hrl").
-
-%% Check if PropEr is available
+%% Include proper before eunit to avoid LET macro redefinition conflict:
+%% proper_common.hrl defines LET unconditionally, while eunit.hrl uses
+%% -ifndef(LET). Including proper first lets eunit's guard skip its definition.
+%% PROPER_NO_TRANS prevents proper_transformer from exporting prop_*_test/0
+%% functions that EUnit already exports (due to _test suffix).
 -ifdef(PROPER).
+-define(PROPER_NO_TRANS, true).
 -include_lib("proper/include/proper.hrl").
 -define(PROPER_AVAILABLE, true).
 -else.
 -define(PROPER_AVAILABLE, false).
 -endif.
+
+-include_lib("eunit/include/eunit.hrl").
 
 %%%===================================================================
 %%% Property Tests
