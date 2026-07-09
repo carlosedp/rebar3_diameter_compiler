@@ -22,6 +22,7 @@ jobs:
           - { otp: "27", rebar3: "3.25.1" }
           - { otp: "28", rebar3: "3.25.1" }
           - { otp: "28", rebar3: "3.27.0" }
+          - { otp: "29", rebar3: "3.27.0" }
     name: Erlang/OTP ${{ matrix.otp }} / rebar3 ${{ matrix.rebar3 }}
 
     steps:
