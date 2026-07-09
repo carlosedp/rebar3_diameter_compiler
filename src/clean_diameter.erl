@@ -137,7 +137,7 @@ clean(State, _AppFile) ->
 %% @private
 dia_generated_files(AppDir, DiaDir, SrcDir, IncDir, DiaOpts) ->
     F = fun(File, Acc) ->
-        case catch diameter_dict_util:parse({path, File}, DiaOpts) of
+        try diameter_dict_util:parse({path, File}, DiaOpts) of
             {ok, Spec} ->
                 FileName = dia_filename(File, Spec),
                 [
@@ -153,6 +153,9 @@ dia_generated_files(AppDir, DiaDir, SrcDir, IncDir, DiaOpts) ->
                 ] ++
                     Acc;
             _ ->
+                Acc
+        catch
+            _:_ ->
                 Acc
         end
     end,
