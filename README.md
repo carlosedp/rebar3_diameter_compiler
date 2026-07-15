@@ -5,7 +5,7 @@ Compile [diameter](http://erlang.org/doc/man/diameter.html) `.dia` files in reba
 Browse the [plugin documentation](https://carlosedp.github.io/rebar3_diameter_compiler/).
 
 [![Erlang CI](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml/badge.svg)](https://github.com/carlosedp/rebar3_diameter_compiler/actions/workflows/erlang.yml)
- [![Hex pm](http://img.shields.io/hexpm/v/rebar3_diameter_compiler.svg?style=flat)](https://hex.pm/packages/rebar3_diameter_compiler)
+[![Hex pm](http://img.shields.io/hexpm/v/rebar3_diameter_compiler.svg?style=flat)](https://hex.pm/packages/rebar3_diameter_compiler)
 
 ## Build
 
@@ -53,7 +53,6 @@ The plugin will run on compile and clean commands (like `rebar3 compile` and `re
     $ rebar3 diameter clean
     ===> Cleaning diameter compiled files...
 
-
 The plugin will compile all `.dia` files by default. You can use the option below to compile only specific diameter dictionaries
 
 ```erlang
@@ -84,3 +83,7 @@ This is mostly a reminder on how to bump and publish a new version.
     rebar3 hex user auth
     # Cut new version with hex
     rebar3 hex cut
+    rebar3 hex publish
+    git tag vX.Y.Z
+    git push --tags
+    # Create a new release in Github with the same tag and version number
