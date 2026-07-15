@@ -1,9 +1,11 @@
 # Test Coverage Improvements Summary
 
 ## Overview
+
 Enhanced the rebar3_diameter_compiler plugin test suite from basic integration tests to comprehensive coverage including unit tests, error handling, property-based testing, and stress tests.
 
 ## Test Suite Growth
+
 - **Before**: 3 integration tests (compile, compile_only, compare)
 - **After**: 59 total tests across 4 test modules
 - **New Tests Added**: 56 tests
@@ -11,9 +13,11 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 ## New Test Modules
 
 ### 1. Unit Tests (`unit_tests.erl`) - 32 tests
+
 **Purpose**: Test individual components and functions in isolation
 
 **Coverage Areas**:
+
 - Provider initialization (compile and clean providers)
 - Error message formatting
 - Configuration option parsing (`dia_opts`, `dia_first_files`, `dia_only_files`)
@@ -25,6 +29,7 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - File operation setup helpers
 
 **Key Test Categories**:
+
 - ✅ Provider registration and initialization
 - ✅ Configuration validation
 - ✅ Filename edge cases (empty paths, multiple dots, special characters)
@@ -33,9 +38,11 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - ✅ Rebar3 state manipulation
 
 ### 2. Error Tests (`error_tests.erl`) - 14 tests
+
 **Purpose**: Verify robust error handling and edge cases
 
 **Coverage Areas**:
+
 - Malformed .dia files (empty, comments-only, syntax errors)
 - Missing dependencies (non-existent inherited dictionaries)
 - File system errors (missing files, directories as files)
@@ -45,6 +52,7 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - File format edge cases (long lines, no trailing newlines, CRLF)
 
 **Key Test Categories**:
+
 - ✅ Empty and minimal .dia files
 - ✅ Malformed dictionary syntax
 - ✅ Missing inherited dictionaries
@@ -56,9 +64,11 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - ✅ Line ending variations (Unix/Windows)
 
 ### 3. Property-Based Tests (`property_tests.erl`) - 10 tests
+
 **Purpose**: Verify invariants with randomized inputs
 
 **Coverage Areas**:
+
 - Graph operation properties (vertex count preservation)
 - Path operation idempotence
 - List deduplication invariants
@@ -69,6 +79,7 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - Resource leak detection (many file operations)
 
 **Key Test Categories**:
+
 - ✅ Property-based tests (with PropEr when available)
 - ✅ Fuzz testing with random inputs
 - ✅ Invariant verification
@@ -76,9 +87,11 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 - ✅ Resource management
 
 ### 4. Integration Tests (`dia_tests.erl`) - 3 tests (existing)
+
 **Purpose**: End-to-end compilation testing
 
 **Coverage Areas**:
+
 - Full rebar3 project compilation
 - Selective file compilation (`dia_only_files`)
 - Generated output validation
@@ -87,11 +100,13 @@ Enhanced the rebar3_diameter_compiler plugin test suite from basic integration t
 ## New Test Artifacts
 
 ### Test .dia Files
+
 - `qux.dia` - Tests single inheritance (depends on foo)
 - `complex.dia` - Tests multiple inheritance (depends on foo and bar)
 - Existing: `foo.dia`, `bar.dia`, `baz.dia`, `diameter_3gpp_base.dia`
 
 ### Documentation
+
 - `TEST_COVERAGE.md` - Comprehensive test documentation
 - Test running instructions
 - Coverage goals and CI/CD integration details
@@ -112,6 +127,7 @@ All Tests: PASSING ✅
 ## Coverage Improvements
 
 ### Areas Now Tested
+
 1. **Provider System**
    - Initialization and registration
    - Command-line interface
@@ -150,11 +166,13 @@ All Tests: PASSING ✅
 ## Running Tests
 
 ### All Tests
+
 ```bash
 rebar3 eunit
 ```
 
 ### Specific Modules
+
 ```bash
 rebar3 eunit --module=unit_tests
 rebar3 eunit --module=error_tests
@@ -163,14 +181,16 @@ rebar3 eunit --module=dia_tests
 ```
 
 ### With Coverage Report
+
 ```bash
 rebar3 cover -v
 ```
 
-### In Nix Development Shell
+### With Homebrew and mise
+
 ```bash
-nix develop
-rebar3 eunit
+brew install erlang rebar3 git mise
+mise run test
 ```
 
 ## Benefits
@@ -185,6 +205,7 @@ rebar3 eunit
 ## Future Enhancements
 
 Potential areas for further testing:
+
 - Performance benchmarks
 - Concurrency testing
 - Memory usage profiling

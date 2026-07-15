@@ -11,6 +11,21 @@ Browse the [plugin documentation](https://carlosedp.github.io/rebar3_diameter_co
 
     ./rebar3 compile
 
+## Development Environment
+
+This project no longer relies on Nix flakes for local development.
+
+Install required tools with Homebrew:
+
+    brew install erlang rebar3 git mise
+
+Run project tasks with mise:
+
+    mise run compile
+    mise run test
+    mise run lint
+    mise run docs
+
 ## Use
 
 Add the plugin to your rebar config from Hex.pm (published version):

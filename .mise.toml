@@ -1,0 +1,19 @@
+[tasks.compile]
+description = "Compile the project"
+run = "rebar3 compile"
+
+[tasks.test]
+description = "Run unit and integration tests"
+run = "rebar3 eunit"
+
+[tasks.lint]
+description = "Run lint checks"
+run = "rebar3 lint"
+
+[tasks.docs]
+description = "Generate documentation"
+run = "rebar3 edoc"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rebar3 clean"

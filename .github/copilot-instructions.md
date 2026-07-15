@@ -52,12 +52,13 @@ rebar3 pub            # eunit + edoc + format + hex cut
 rebar3 publish_hex    # eunit + edoc + hex publish
 ```
 
-### Nix Development
+### Homebrew and mise Development
 
 ```bash
-nix develop          # Enter dev shell with Erlang + rebar3
-nix build            # Build package
-nix run .#test       # Run tests via Nix
+brew install erlang rebar3 git mise   # Install dependencies
+mise run compile                       # Compile project
+mise run test                          # Run tests
+mise run lint                          # Run checks
 ```
 
 ## Project-Specific Patterns
