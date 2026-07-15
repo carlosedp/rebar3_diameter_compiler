@@ -12,7 +12,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      ImageOS: ubuntu24
     strategy:
       matrix:
         include:
@@ -44,7 +46,9 @@ jobs:
         run: rebar3 cover --verbose
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    env:
+      ImageOS: ubuntu24
     needs: test
     if: github.ref == 'refs/heads/main'
     environment:

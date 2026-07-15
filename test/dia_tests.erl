@@ -70,10 +70,10 @@ setup() ->
 setup(Only) ->
     {ok, CurrentDir} = file:get_cwd(),
     Repo = find_repo_root(CurrentDir),
-    Branch = setup_git_branch(),
+    GitRef = setup_git_reference(),
     Test_target = test_target(Repo),
     setup_delete(Test_target),
-    setup_create(Test_target, Repo, Branch, Only),
+    setup_create(Test_target, Repo, GitRef, Only),
     setup_test_run(test_run_directory(Repo)).
 
 %% Find the repository root by looking for key files
@@ -118,10 +118,10 @@ find_repo_root(Dir) ->
             end
     end.
 
-setup_create(Test_target, Repo, Branch, Only) ->
+setup_create(Test_target, Repo, GitRef, Only) ->
     [ok = setup_create_dia(Test_target, X) || X <- diameter_files()],
     ok = setup_create_src(Test_target),
-    ok = setup_create_rebar_config(Test_target, Repo, Branch, Only).
+    ok = setup_create_rebar_config(Test_target, Repo, GitRef, Only).
 
 setup_create_dia(Test_target, BaseName) ->
     Diameter_file = BaseName ++ ".dia",
@@ -156,10 +156,25 @@ setup_create_src_content(App) ->
         "\t{applications, [kernel,stdlib]}\n"
         "]}.\n".
 
-setup_create_rebar_config(Test_target, Repo, Branch, Only) ->
+setup_create_rebar_config(Test_target, Repo, GitRef, Only) ->
     File = filename:join(Test_target, "rebar.config"),
     ok = filelib:ensure_dir(File),
-    file:write_file(File, setup_rebar_config_content(Repo, Branch, Only)).
+    file:write_file(File, setup_rebar_config_content(Repo, GitRef, Only)).
+
+setup_git_reference() ->
+    % Prefer pinning to an exact commit, which works in detached HEAD CI checkouts.
+    Ref = string:trim(os:cmd("git rev-parse --verify HEAD 2>/dev/null")),
+    case Ref of
+        "" ->
+            {branch, setup_git_branch()};
+        _ ->
+            {ref, Ref}
+    end.
+
+git_reference_string({branch, Branch}) ->
+    "{branch, \"" ++ Branch ++ "\"}";
+git_reference_string({ref, Ref}) ->
+    "{ref, \"" ++ Ref ++ "\"}".
 
 setup_delete(Directory) ->
     Paths =
@@ -213,14 +228,14 @@ setup_git_branch() ->
             GithubHeadRef
     end.
 
-setup_rebar_config_content(Repo, Branch, undefined) ->
+setup_rebar_config_content(Repo, GitRef, undefined) ->
     "\n"
     "{plugins, [\n"
     "\t{rebar3_diameter_compiler, {git, \"file://" ++
         Repo ++
-        "\", {branch, \"" ++
-        Branch ++
-        "\"}}}\n"
+    "\", " ++
+    git_reference_string(GitRef) ++
+    "}}\n"
         "]}.\n"
         "{provider_hooks, [\n"
         "\t{pre, [\n"
@@ -228,14 +243,14 @@ setup_rebar_config_content(Repo, Branch, undefined) ->
         "\t	{compile, {diameter, compile}}\n"
         "\t]}\n"
         "]}.\n";
-setup_rebar_config_content(Repo, Branch, Only) ->
+setup_rebar_config_content(Repo, GitRef, Only) ->
     "\n"
     "{plugins, [\n"
     "\t{rebar3_diameter_compiler, {git, \"file://" ++
         Repo ++
-        "\", {branch, \"" ++
-        Branch ++
-        "\"}}}\n"
+    "\", " ++
+    git_reference_string(GitRef) ++
+    "}}\n"
         "]}.\n"
         "{provider_hooks, [\n"
         "\t{pre, [\n"
