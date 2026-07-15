@@ -233,9 +233,9 @@ setup_rebar_config_content(Repo, GitRef, undefined) ->
     "{plugins, [\n"
     "\t{rebar3_diameter_compiler, {git, \"file://" ++
         Repo ++
-    "\", " ++
-    git_reference_string(GitRef) ++
-    "}}\n"
+        "\", " ++
+        git_reference_string(GitRef) ++
+        "}}\n"
         "]}.\n"
         "{provider_hooks, [\n"
         "\t{pre, [\n"
@@ -248,9 +248,9 @@ setup_rebar_config_content(Repo, GitRef, Only) ->
     "{plugins, [\n"
     "\t{rebar3_diameter_compiler, {git, \"file://" ++
         Repo ++
-    "\", " ++
-    git_reference_string(GitRef) ++
-    "}}\n"
+        "\", " ++
+        git_reference_string(GitRef) ++
+        "}}\n"
         "]}.\n"
         "{provider_hooks, [\n"
         "\t{pre, [\n"
